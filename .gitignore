@@ -1,0 +1,6 @@
+bin/
+obj/
+token.txt
+Migrations/
+knucklebones.db
+admin.txt
