@@ -120,4 +120,10 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 
         return result;
     }
+
+    async public static Task<string> GetProfilePicture(ulong uid)
+    {
+        IUser user = await KnucklebonesBot.Client.GetUserAsync(uid);
+        return user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
+    } 
 }

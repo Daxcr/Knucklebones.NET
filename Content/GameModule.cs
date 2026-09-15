@@ -191,22 +191,15 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
                 message.Components = disabledComponents;
             });
 
-            embed = new EmbedBuilder()
-                .WithTitle($"Turn {meta.Turn}")
-                .WithDescription($"""
-It is <@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
-{meta.BuildTable(meta.InitiatorTable)}
-<@{meta.InitiatorID}>
-
-{meta.BuildTable(meta.OpponentTable, true)}
-<@{meta.OpponentID}>
-""")
-                .Build();
+            Embed initiatorembed = await BuildPlayerEmbed(meta, true);
+            Embed opponentembed = await BuildPlayerEmbed(meta, false);          
 
             meta.CurrentDice = (byte)new Random().Next(1,7);
             Embed diceEmbed = new EmbedBuilder()
-                .WithTitle($"Dice")
-                .WithDescription($"# {GameMetadata.DiceEmojis[meta.CurrentDice]}")
+                .WithDescription($"""
+<@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
+# {GameMetadata.DiceEmojis[$"dice{meta.CurrentDice}_single"]}
+""")
                 .Build();
 
             MessageComponent gameActions = new ComponentBuilder()
@@ -215,7 +208,7 @@ It is <@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
                 .WithButton("Right", $"play/right/{meta.ID}", ButtonStyle.Primary)
                 .Build();
 
-            await meta.Channel.SendMessageAsync(embeds: [embed, diceEmbed], components: gameActions);
+            await meta.Channel.SendMessageAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
             RestUserMessage temp = await meta.Channel.SendMessageAsync($"<@{meta.InitiatorID}><@{meta.OpponentID}>"); // ghost ping! :D
             await temp.DeleteAsync();
         }
@@ -306,29 +299,30 @@ It is <@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
             });
 
             if (meta.InitiatorTurn)
-                meta.InitiatorTable.Add(pressedbutton, meta.CurrentDice);
+            {
+                meta.InitiatorTableDiff = meta.InitiatorTable.Clone();
+                meta.OpponentTableDiff = meta.OpponentTable.Clone();
+                meta.InitiatorTable.Add(pressedbutton, meta.CurrentDice, meta.OpponentTable);
+            }
             else
-                meta.OpponentTable.Add(pressedbutton, meta.CurrentDice);
+            {
+                meta.InitiatorTableDiff = meta.InitiatorTable.Clone();
+                meta.OpponentTableDiff = meta.OpponentTable.Clone();
+                meta.OpponentTable.Add(pressedbutton, meta.CurrentDice, meta.InitiatorTable);
+            }
 
             meta.Turn += 1;
             meta.InitiatorTurn = !meta.InitiatorTurn;
 
-            Embed embed = new EmbedBuilder()
-                .WithTitle($"Turn {meta.Turn}")
-                .WithDescription($"""
-It is <@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
-{meta.BuildTable(meta.InitiatorTable)}
-<@{meta.InitiatorID}>
-
-{meta.BuildTable(meta.OpponentTable, true)}
-<@{meta.OpponentID}>
-""")
-                .Build();
+            Embed initiatorembed = await BuildPlayerEmbed(meta, true);
+            Embed opponentembed = await BuildPlayerEmbed(meta, false);          
 
             meta.CurrentDice = (byte)new Random().Next(1,7);
             Embed diceEmbed = new EmbedBuilder()
-                .WithTitle($"Dice")
-                .WithDescription($"# {GameMetadata.DiceEmojis[meta.CurrentDice]}")
+                .WithDescription($"""
+<@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
+# {GameMetadata.DiceEmojis[$"dice{meta.CurrentDice}_single"]}
+""")
                 .Build();
 
             MessageComponent gameActions = new ComponentBuilder()
@@ -337,11 +331,18 @@ It is <@{(meta.InitiatorTurn ? meta.InitiatorID : meta.OpponentID)}>'s turn.
                 .WithButton("Right", $"play/right/{meta.ID}", ButtonStyle.Primary)
                 .Build();
 
-            await component.Message.ReplyAsync(embeds: [embed, diceEmbed], components: gameActions);
+            await component.Message.ReplyAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
         }
         else
         {
             
         }
     }
+
+    public static async Task<Embed> BuildPlayerEmbed(GameMetadata meta, bool initiator) =>
+        new EmbedBuilder()
+            .WithDescription(meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, !initiator))
+            .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
+            .WithColor((initiator && meta.InitiatorTurn) || (!initiator && !meta.InitiatorTurn) ? Color.LighterGrey : Color.Default)
+            .Build();
 }
