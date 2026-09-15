@@ -325,11 +325,7 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
 """)
                 .Build();
 
-            MessageComponent gameActions = new ComponentBuilder()
-                .WithButton("Left", $"play/left/{meta.ID}", ButtonStyle.Primary)
-                .WithButton("Middle", $"play/middle/{meta.ID}", ButtonStyle.Primary)
-                .WithButton("Right", $"play/right/{meta.ID}", ButtonStyle.Primary)
-                .Build();
+            MessageComponent gameActions = await BuildGameActions(meta, meta.InitiatorTurn);
 
             await component.Message.ReplyAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
         }
@@ -341,8 +337,21 @@ public class GameModule : InteractionModuleBase<SocketInteractionContext>
 
     public static async Task<Embed> BuildPlayerEmbed(GameMetadata meta, bool initiator) =>
         new EmbedBuilder()
-            .WithDescription(meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, !initiator))
+            .WithDescription($"""
+{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, !initiator)}
+**Points:** {meta.BuildPoints(initiator)}
+""")
             .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
             .WithColor((initiator && meta.InitiatorTurn) || (!initiator && !meta.InitiatorTurn) ? Color.LighterGrey : Color.Default)
             .Build();
+
+    public static async Task<MessageComponent> BuildGameActions(GameMetadata meta, bool initiator)
+    {
+        GameMetadata.Table table = initiator ? meta.InitiatorTable : meta.OpponentTable;
+        return new ComponentBuilder()
+            .WithButton("Left", $"play/left/{meta.ID}", ButtonStyle.Primary, disabled: !table.Left.Contains(0))
+            .WithButton("Middle", $"play/middle/{meta.ID}", ButtonStyle.Primary, disabled: !table.Middle.Contains(0))
+            .WithButton("Right", $"play/right/{meta.ID}", ButtonStyle.Primary, disabled: !table.Right.Contains(0))
+            .Build();
+    }
 }

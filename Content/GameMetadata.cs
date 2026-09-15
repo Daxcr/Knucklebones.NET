@@ -236,4 +236,38 @@ public class GameMetadata
 
         return DiceEmojis[emoji];
     }
+
+    public int BuildPoints(bool initiator)
+    {
+        Table table = initiator ? InitiatorTable : OpponentTable;
+        return BuildColumnPoints(table.Left) + BuildColumnPoints(table.Middle) + BuildColumnPoints(table.Right);
+    }
+
+    private int BuildColumnPoints(List<byte> col)
+    {
+        List<byte> checkedValues = new();
+        int total = 0;
+        foreach (byte number in col)
+        {
+            if (checkedValues.Contains(number))
+                continue;
+
+            checkedValues.Add(number);
+            switch (col.Count(n => n == number))
+            {
+                case 1:
+                    total += number;
+                    break;
+
+                case 2:
+                    total += number * 4;
+                    break;
+
+                case 3:
+                    total += number * 9;
+                    break;
+            }
+        }
+        return total;
+    }
 }
