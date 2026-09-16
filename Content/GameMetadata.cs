@@ -15,11 +15,12 @@ public class GameMetadata
     public string ID;
     public bool GameStarted = false;
     public bool GameDeclined = false;
+    public required bool ShortGame = false;
     public bool InitiatorTurn;
     public required ulong InitiatorID;
     public required ulong OpponentID;
-    public required ulong InitiatedChannelID;
-    public SocketTextChannel? Channel;
+    public required ulong? InitiatedChannelID;
+    public IMessageChannel? Channel;
     public Table InitiatorTable = new();
     public Table InitiatorTableDiff = new();
     public Table OpponentTable = new();
@@ -45,6 +46,8 @@ public class GameMetadata
                 Right = new List<byte>(Right)
             };
         }
+
+        public bool IsFull() => !(Left.Contains(0) || Middle.Contains(0) || Right.Contains(0));
 
         public void Add(string col, byte value, Table toClean)
         {

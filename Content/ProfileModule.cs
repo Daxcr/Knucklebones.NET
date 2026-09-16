@@ -4,8 +4,11 @@ using Knucklebones.DB;
 
 namespace Knucklebones;
 
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
+[CommandContextType(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel)]
 public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 {
+    public const int DevotionBarWidth = 14;
     public static Dictionary<string, string> DevotionSegments = new()
     {
         { "left_empty", "<:devotion_left_empty:1548911372106997820>" },
@@ -18,6 +21,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 
         { "right_empty", "<:devotion_right_empty:1548912153107636305>" },
         { "right_half", "<:devotion_right_half:1548912167125000232>" },
+        { "right_full", "<:devotion_right_full:1549540951247163473>" }
     };
 
     public static Dictionary<string, string> GenericEmojis = new()
@@ -53,7 +57,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         Embed devotion = new EmbedBuilder()
             .WithDescription($"""
 {usermeta.Devotion} / {maxDevotion}{GenericEmojis["devotion"]}
-{CalculateDevotionBar(14, usermeta.Devotion, maxDevotion)}
+{CalculateDevotionBar(DevotionBarWidth, usermeta.Devotion, maxDevotion)}
 **Level:** {usermeta.Level}
 """)
             .WithColor(Color.LighterGrey)
@@ -77,7 +81,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
     }
     public static string CalculateDevotionBar(int barWidth, long devotion, long maxDevotion)
     {
-        float segmentSize = maxDevotion / barWidth;
+        float segmentSize = (float)maxDevotion / barWidth;
 
         string result = string.Empty;
         for (int i = 0; i < barWidth; i++)
@@ -100,9 +104,12 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
                 if (devotion < iterationValue)
                 {
                     result += DevotionSegments["right_empty"];
-                } else
+                } else if (devotion < maxDevotion)
                 {
                     result += DevotionSegments["right_half"];
+                } else
+                {
+                    result += DevotionSegments["right_full"];
                 }
             } else {
                 if (devotion < iterationValue)

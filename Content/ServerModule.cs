@@ -5,6 +5,8 @@ using Knucklebones.DB;
 
 namespace Knucklebones;
 
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
+[CommandContextType(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel)]
 public class ServerModule : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("config", "Configure your server to work with Knucklebones.NET. Send this message on its own for a help menu.")]
@@ -48,6 +50,9 @@ public class ServerModule : InteractionModuleBase<SocketInteractionContext>
 
         if (restrictToChannelEnabled != null)
             servermeta.ChannelLock = (bool)restrictToChannelEnabled;
+
+        if (newgameBehaviour != null)
+            servermeta.State = (GameMetadata.GameState)newgameBehaviour;
 
         await FollowupAsync("Your settings have been applied");
 
