@@ -1,0 +1,100 @@
+using CotLMinigames.DB;
+using Discord;
+using Discord.Rest;
+using Discord.WebSocket;
+
+namespace CotLMinigames.Knucklebones;
+
+public static partial class Actions
+{
+    public static async Task AcceptGame(string[] ButtonData, SocketMessageComponent component)
+    {
+        if (ButtonData.Length < 2)
+            return;
+
+        string gameID = ButtonData[1];
+        IUser user = component.User;
+        KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
+        
+        if (meta != null)
+        {
+            if (meta.OpponentID != user.Id)
+            {
+                await component.RespondAsync("This isn't for you.", ephemeral: true);
+                return;
+            }
+
+            await component.DeferAsync();
+
+            var db = Database.Create();
+
+            UserData opponentObj = await Database.GetUser(meta.OpponentID, db);
+            opponentObj.Inventory.Coins -= meta.Bet;
+
+            await db.SaveChangesAsync();
+
+            IMessageChannel channel = component.Channel;
+
+            IUser initiator = BotClient.Client.GetUser(meta.InitiatorID);
+            IUser opponent = BotClient.Client.GetUser(meta.OpponentID);
+
+            DateTimeOffset offset = DateTimeOffset.UtcNow.AddSeconds(meta.GameExpiry);
+            meta.GameExpiryDisplay = TimestampTag.FromDateTimeOffset(offset, TimestampTagStyles.Relative);
+            meta.GameStarted = true;
+
+            Random rnd = new();
+            meta.InitiatorTurn = rnd.Next(0, 2) == 0;
+
+            DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
+            TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
+
+            Embed embed = new EmbedBuilder()
+                .WithTitle("Match request (Accepted)")
+                .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was accepted {expiry}.")
+                .WithColor(Color.Green)
+                .Build();
+                
+            MessageComponent disabledComponents = new ComponentBuilder()
+                .WithButton("Accept", $"accept/disabled", ButtonStyle.Success, disabled: true)
+                .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
+                .Build();
+
+            await component.ModifyOriginalResponseAsync(message =>
+            {
+                message.Embed = embed;
+                message.Components = disabledComponents;
+            });
+
+            Embed initiatorembed = await BuildPlayerEmbed(meta, true);
+            Embed opponentembed = await BuildPlayerEmbed(meta, false);          
+
+            meta.CurrentDice = (byte)new Random().Next(1,7);
+            Embed diceEmbed = BuildDiceEmbed(meta);
+
+            MessageComponent gameActions = new ComponentBuilder()
+                .WithButton("Left", $"play/left/{meta.ID}", ButtonStyle.Primary)
+                .WithButton("Middle", $"play/middle/{meta.ID}", ButtonStyle.Primary)
+                .WithButton("Right", $"play/right/{meta.ID}", ButtonStyle.Primary)
+                .Build();
+
+            IUserMessage msg;
+
+            if (meta.Guild == null)
+            {
+                msg = await component.FollowupAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
+            }
+            else
+            {
+                msg = await component.Message.ReplyAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
+            }
+
+            _ = WaitForGameExpiry(meta, msg);
+
+            if (component.Channel is SocketGuildChannel guildChannel && guildChannel.Guild != null)
+            {
+                RestUserMessage temp = (RestUserMessage)await meta.Channel!.SendMessageAsync($"<@{meta.InitiatorID}><@{meta.OpponentID}>"); // ghost ping! :D
+                await temp.DeleteAsync();
+            }
+        }
+    }
+}

@@ -1,9 +1,10 @@
-namespace Knucklebones.DB;
+using CotLMinigames.DB.UserInventory;
+
+namespace CotLMinigames.DB;
 
 public class UserData
 {
     public ulong UserID { get; set; }
-    public long Coins { get; set; } = 100;
     public long Wins { get; set; } = 0;
     public long GamesPlayed { get; set; } = 0;
     public ushort Streak { get; set; } = 0;
@@ -11,7 +12,7 @@ public class UserData
     public long Level { get; set; } = 0;
     public long Devotion { get; set; } = 0;
     public Banner? ActiveBanner { get; set; }
-    public List<ICollectable> Inventory { get; set; } = new();
+    public Inventory Inventory { get; set; } = new();
     public List<long> BlockedUserIDs { get; set; } = new();
     public List<GameMetadata> LastTenGames { get; set; } = new();
     public List<ProfileBadges> Badges { get; set; } = new();

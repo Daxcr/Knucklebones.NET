@@ -1,21 +1,22 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Knucklebones.Admin;
+using CotLMinigames.Admin;
 
-namespace Knucklebones;
+namespace CotLMinigames;
 
-public class KnucklebonesBot
+public class BotClient
 {
     public static ulong ADMIN = ulong.Parse(File.ReadAllText("admin.txt"));
     public static DiscordSocketClient Client = new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All });
     InteractionService interactions = new InteractionService(Client);
     public const string CommandPrefix = "$$";
+    public static List<GameMetadata> Games = new();
     public static Dictionary<string, Func<SocketMessage, Task>> Commands = new()
     {
         { "devotion", AdminCommands.AddDevotion }
     };
-    public KnucklebonesBot()
+    public BotClient()
     {
         Client.Log += message =>
         {
@@ -56,15 +57,15 @@ public class KnucklebonesBot
             switch (buttondata[0])
             {
                 case "acceptgame":
-                    _ = GameModule.AcceptGame(buttondata, component);
+                    _ = Knucklebones.Actions.AcceptGame(buttondata, component);
                     break;
 
                 case "declinegame":
-                    _ = GameModule.DeclineGame(buttondata, component);
+                    _ = Knucklebones.Actions.DeclineGame(buttondata, component);
                     break;
 
                 case "play":
-                    _ = GameModule.PlayMove(buttondata, component);
+                    _ = Knucklebones.Actions.PlayMove(buttondata, component);
                     break;
             }
         };
@@ -72,7 +73,7 @@ public class KnucklebonesBot
 
     public async Task Start(string token)
     {
-        await interactions.AddModuleAsync<GameModule>(null);
+        await interactions.AddModuleAsync<Knucklebones.KBGameModule>(null);
         await interactions.AddModuleAsync<ProfileModule>(null);
         await interactions.AddModuleAsync<ServerModule>(null);
 

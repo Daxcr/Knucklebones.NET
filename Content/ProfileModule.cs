@@ -1,8 +1,8 @@
+using CotLMinigames.DB;
 using Discord;
 using Discord.Interactions;
-using Knucklebones.DB;
 
-namespace Knucklebones;
+namespace CotLMinigames;
 
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 [CommandContextType(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel)]
@@ -28,6 +28,8 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
     {
         { "devotion", "<:devotion:1548923541712543774>" },
         { "coin", "<:coin:1548928750240931900>" },
+        { "wool", "<:wool:1549712729248497745>" },
+        { "godtear", "<:godtear:1549712752166305852>" },
     };
 
     [SlashCommand("profile", "View your or somebody else's profile")]
@@ -43,7 +45,9 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         Embed main = new EmbedBuilder()
             .WithTitle($"{user.GlobalName}'s profile")
             .WithDescription($"""
-**Coins {GenericEmojis["coin"]}:** {usermeta.Coins}
+**Coins {GenericEmojis["coin"]}:** {usermeta.Inventory.Coins}
+**Wool {GenericEmojis["wool"]}:** {usermeta.Inventory.Wool}
+**God Tears {GenericEmojis["godtear"]}:** {usermeta.Inventory.GodTears}
 **Wins:** {usermeta.Wins}
 **Games played:** {usermeta.GamesPlayed}
 """)
@@ -130,7 +134,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 
     async public static Task<string> GetProfilePicture(ulong uid)
     {
-        IUser user = await KnucklebonesBot.Client.GetUserAsync(uid);
+        IUser user = await BotClient.Client.GetUserAsync(uid);
         return user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
     } 
 }

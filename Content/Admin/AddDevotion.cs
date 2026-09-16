@@ -1,7 +1,7 @@
 using Discord.WebSocket;
-using Knucklebones.DB;
+using CotLMinigames.DB;
 
-namespace Knucklebones.Admin;
+namespace CotLMinigames.Admin;
 
 public partial class AdminCommands
 {

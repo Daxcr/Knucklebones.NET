@@ -1,16 +1,16 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Knucklebones.DB;
+using CotLMinigames.DB;
 
-namespace Knucklebones;
+namespace CotLMinigames;
 
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 [CommandContextType(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel)]
 public class ServerModule : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("config", "Configure your server to work with Knucklebones.NET. Send this message on its own for a help menu.")]
-    public async Task ServerSettings(bool? pingOpponents = null, ITextChannel? restrictToChannel = null, bool? restrictToChannelEnabled = null, GameMetadata.GameState? newgameBehaviour = null)
+    public async Task ServerSettings(bool? pingOpponents = null, ITextChannel? restrictToChannel = null, bool? restrictToChannelEnabled = null)
     {
         if (Context.User is not SocketGuildUser)
         {
@@ -22,14 +22,13 @@ public class ServerModule : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("You don't have the required `Manage Guild` permissions.", ephemeral: true);
             return;
         }
-        if (pingOpponents == null && restrictToChannel == null && restrictToChannelEnabled == null && newgameBehaviour == null)
+        if (pingOpponents == null && restrictToChannel == null && restrictToChannelEnabled == null)
         {
             Embed embed = new EmbedBuilder()
             .WithDescription("""
 - `ping-opponents` => Whether server members are mentioned when somebody challenges them.
 - `restrict-to-channel` => Set a channel which your server members are only allowed to start games in.
 - `restrict-to-channel-enabled` => Whether the previous setting is in effect.
-- `newgame-behaviour` => How the bot behaves (ie, `Threadless` creates single-message games dumped into channel, `Thread` creates individual threads for games).
 """)
             .Build();
             
@@ -50,9 +49,6 @@ public class ServerModule : InteractionModuleBase<SocketInteractionContext>
 
         if (restrictToChannelEnabled != null)
             servermeta.ChannelLock = (bool)restrictToChannelEnabled;
-
-        if (newgameBehaviour != null)
-            servermeta.State = (GameMetadata.GameState)newgameBehaviour;
 
         await FollowupAsync("Your settings have been applied");
 

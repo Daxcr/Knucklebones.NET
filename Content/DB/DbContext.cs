@@ -1,7 +1,8 @@
 using System.Text.Json;
+using CotLMinigames.Knucklebones;
 using Microsoft.EntityFrameworkCore;
 
-namespace Knucklebones.DB;
+namespace CotLMinigames.DB;
 
 public class DatabaseContext : DbContext
 {
@@ -17,27 +18,6 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<ServerSettings>()
             .HasKey(s => s.ServerID);
-
-        modelBuilder.Entity<UserData>()
-            .Property(u => u.Inventory)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => JsonSerializer.Deserialize<List<ICollectable>>(v, (JsonSerializerOptions?)null) ?? new()
-            );
-        
-        modelBuilder.Entity<UserData>()
-            .Property(u => u.ActiveBanner)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => JsonSerializer.Deserialize<Banner>(v, (JsonSerializerOptions?)null)
-            );
-
-        modelBuilder.Entity<UserData>()
-            .Property(u => u.LastTenGames)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => JsonSerializer.Deserialize<List<GameMetadata>>(v, (JsonSerializerOptions?)null) ?? new()
-            );
     }
 }
 public static class Database
@@ -45,17 +25,23 @@ public static class Database
     public static DatabaseContext Create() => new DatabaseContext();
     public async static Task<UserData> GetUser(ulong uid, DatabaseContext db)
     {
-        UserData? user = await db.Users.FindAsync(uid);
+        UserData? user = await db.Users
+            .Include(u => u.Inventory)
+            .FirstOrDefaultAsync(u => u.UserID == uid);
+
         if (user == null)
         {
             user = new() { UserID = uid };
             db.Users.Add(user);
             await db.SaveChangesAsync();
+
+            user = await db.Users
+                .Include(u => u.Inventory)
+                .FirstAsync(u => u.UserID == uid);
         }
 
         return user;
     }
-
     public async static Task<ServerSettings> GetGuild(ulong gid, DatabaseContext db)
     {
         ServerSettings? server = await db.Servers.FindAsync(gid);
