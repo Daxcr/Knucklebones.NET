@@ -75,7 +75,7 @@ public class KBGameMetadata : GameMetadata
 
     public static Dictionary<string, string> DiceEmojis = new()
     {
-        { "empty", ":black_large_square:" },
+        { "empty", "<:empty:1549744968334315590>" },
 
         { "dice1_single", "<:dice1_single:1549203689435168808>" },
         { "dice1_double", "<:dice1_double:1549203687090421790>" },
