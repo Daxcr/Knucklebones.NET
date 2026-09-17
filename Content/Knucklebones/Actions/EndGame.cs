@@ -8,6 +8,9 @@ public static partial class Actions
 {
     public static async void EndGame(KBGameMetadata meta, SocketMessageComponent component)
     {
+        if (!BotClient.Games.Contains(meta))
+            return;
+            
         BotClient.Games.Remove(meta);
 
         int initiatorScore = meta.BuildPoints(true);
@@ -58,6 +61,9 @@ public static partial class Actions
 
     public static async void EndGame(KBGameMetadata meta, IUserMessage message)
     {
+        if (!BotClient.Games.Contains(meta))
+            return;
+
         BotClient.Games.Remove(meta);
 
         int initiatorScore = meta.BuildPoints(true);
