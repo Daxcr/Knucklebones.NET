@@ -7,12 +7,8 @@ public static partial class Actions
 {
     public static async Task PlayMove(string[] ButtonData, SocketMessageComponent component)
     {
-        Console.WriteLine("Button Pressed");
         string gameID = ButtonData[2];
         string turn = ButtonData[3];
-
-        Console.WriteLine(ButtonData[3]);
-        Console.WriteLine(component.User.Id);
 
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
         
@@ -25,41 +21,40 @@ public static partial class Actions
             return;
         }
 
-        Console.WriteLine("IS PLAYER");
-        Console.WriteLine(int.Parse(turn) != meta.Turn);
-        Console.WriteLine(meta.Turn);
-
         if (
             (component.User.Id != meta.InitiatorID && meta.InitiatorTurn) ||
             (component.User.Id == meta.InitiatorID && !meta.InitiatorTurn) ||
-            int.Parse(turn) != meta.Turn
+            int.Parse(turn) != meta.Turn || meta.Busy
         )
         {
             await component.RespondAsync("Not your turn", ephemeral: true);
             return;
         }
 
-        Console.WriteLine("Deferring");
+        meta.Busy = true;
 
-        await component.DeferAsync();
-        string pressedbutton = ButtonData[1];
-        Console.WriteLine(pressedbutton);
-
-        RecalculateTables(meta, pressedbutton);
-        Console.WriteLine("Tables recalculated");
-
-        if (meta.InitiatorTable.IsFull() || meta.OpponentTable.IsFull())
+        try
         {
-            EndGame(meta, component);
-            return;
+            await component.DeferAsync();
+            string pressedbutton = ButtonData[1];
+
+            RecalculateTables(meta, pressedbutton);
+
+            if (meta.InitiatorTable.IsFull() || meta.OpponentTable.IsFull())
+            {
+                EndGame(meta, component);
+                return;
+            }
+
+            await AdvanceLastMessage(meta, component);
+
+            meta.Turn += 1;
+            meta.InitiatorTurn = !meta.InitiatorTurn;
+            meta.Busy = false;
+        } catch
+        {
+            meta.Busy = false;
         }
-
-        await AdvanceLastMessage(meta, component);
-        Console.WriteLine("Message advanced");
-
-        meta.Turn += 1;
-        meta.InitiatorTurn = !meta.InitiatorTurn;
-        Console.WriteLine($"Turn updated: {meta.Turn} {meta.InitiatorTurn}");
     }
 
     public static async Task DisableLastMessage(SocketMessageComponent component, string pressedbutton)

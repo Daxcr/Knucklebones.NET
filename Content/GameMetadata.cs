@@ -19,6 +19,7 @@ public class GameMetadata
     public bool GameStarted = false;
     public bool GameDeclined = false;
     public bool InitiatorTurn;
+    public bool Busy = false;
     public required ulong InitiatorID;
     public required ulong OpponentID;
     public required ulong? InitiatedChannelID;
