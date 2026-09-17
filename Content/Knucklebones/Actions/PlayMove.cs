@@ -43,6 +43,8 @@ public static partial class Actions
 
         await AdvanceLastMessage(meta, component);
 
+        await Task.Delay(500);
+
         meta.Turn += 1;
         meta.InitiatorTurn = !meta.InitiatorTurn;
     }
