@@ -36,6 +36,7 @@ public static partial class Actions
             return;
         }
 
+        meta.CurrentDice = (byte)new Random().Next(1,7);
         meta.Turn += 1;
         meta.InitiatorTurn = !meta.InitiatorTurn;
 

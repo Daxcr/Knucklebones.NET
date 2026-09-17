@@ -9,8 +9,6 @@ public static partial class Actions
     {
         Embed initiatorembed = await BuildPlayerEmbed(meta, true);
         Embed opponentembed = await BuildPlayerEmbed(meta, false);          
-
-        meta.CurrentDice = (byte)new Random().Next(1,7);
         Embed diceEmbed = BuildDiceEmbed(meta);
 
         MessageComponent gameActions = BuildGameActions(meta, meta.InitiatorTurn);
