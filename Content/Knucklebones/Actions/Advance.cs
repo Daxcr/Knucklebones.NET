@@ -7,8 +7,11 @@ public static partial class Actions
 {
     public static async Task AdvanceLastMessage(KBGameMetadata meta, SocketMessageComponent component)
     {
-        Embed initiatorembed = await BuildPlayerEmbed(meta, true);
-        Embed opponentembed = await BuildPlayerEmbed(meta, false);          
+
+        Embed initiatorembed = await BuildPlayerEmbed(meta, true, !meta.InitiatorTurn);
+        Embed opponentembed = await BuildPlayerEmbed(meta, false, !meta.InitiatorTurn);   
+
+        meta.CurrentDice = (byte)new Random().Next(1,7);       
         Embed diceEmbed = BuildDiceEmbed(meta);
 
         MessageComponent gameActions = BuildGameActions(meta, meta.InitiatorTurn);
@@ -29,8 +32,8 @@ public static partial class Actions
 
     public static async Task AdvanceAsNewMessage(KBGameMetadata meta, SocketMessageComponent component)
     {
-        Embed initiatorembed = await BuildPlayerEmbed(meta, true);
-        Embed opponentembed = await BuildPlayerEmbed(meta, false);          
+        Embed initiatorembed = await BuildPlayerEmbed(meta, true, !meta.InitiatorTurn);
+        Embed opponentembed = await BuildPlayerEmbed(meta, false, !meta.InitiatorTurn);          
 
         meta.CurrentDice = (byte)new Random().Next(1,7);
         Embed diceEmbed = BuildDiceEmbed(meta);

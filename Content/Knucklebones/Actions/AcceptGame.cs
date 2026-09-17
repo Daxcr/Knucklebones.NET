@@ -76,8 +76,8 @@ public static partial class Actions
                 message.Components = disabledComponents;
             });
 
-            Embed initiatorembed = await BuildPlayerEmbed(meta, true);
-            Embed opponentembed = await BuildPlayerEmbed(meta, false);          
+            Embed initiatorembed = await BuildPlayerEmbed(meta, true, meta.InitiatorTurn);
+            Embed opponentembed = await BuildPlayerEmbed(meta, false, meta.InitiatorTurn);          
 
             meta.CurrentDice = (byte)new Random().Next(1,7);
             Embed diceEmbed = BuildDiceEmbed(meta);

@@ -4,15 +4,15 @@ namespace CotLMinigames.Knucklebones;
 
 public static partial class Actions
 {
-    public static async Task<Embed> BuildPlayerEmbed(KBGameMetadata meta, bool initiator) =>
+    public static async Task<Embed> BuildPlayerEmbed(KBGameMetadata meta, bool initiator, bool initiatorTurn) =>
         new EmbedBuilder()
             .WithDescription($"""
-{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, (meta.InitiatorTurn && initiator) || (!meta.InitiatorTurn && !initiator),!initiator)}
+{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, (initiatorTurn && initiator) || (!initiatorTurn && !initiator),!initiator)}
 **Points:** {meta.BuildPoints(initiator)}
-<@{(initiator ? meta.InitiatorID : meta.OpponentID)}> {((meta.InitiatorTurn && initiator) || (!meta.InitiatorTurn && !initiator) ? $"(Your turn!)" : string.Empty)}
+<@{(initiator ? meta.InitiatorID : meta.OpponentID)}> {((initiatorTurn && initiator) || (!initiatorTurn && !initiator) ? $"(Your turn!)" : string.Empty)}
 """)
             .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
-            .WithColor((initiator && meta.InitiatorTurn) || (!initiator && !meta.InitiatorTurn) ? Color.LighterGrey : Color.Default)
+            .WithColor((initiator && initiatorTurn) || (!initiator && !initiatorTurn) ? Color.LighterGrey : Color.Default)
             .Build();
 
     public static async Task<Embed> BuildEndPlayerEmbed(KBGameMetadata meta, bool initiator, bool winner) =>
