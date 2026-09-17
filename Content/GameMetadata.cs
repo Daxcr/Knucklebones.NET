@@ -5,7 +5,7 @@ namespace CotLMinigames;
 
 public class GameMetadata
 {
-    public static int ChallengeExpiry = 2 * 60;
+    public static int ChallengeExpiry = 5 * 60;
     public static int ShortGameExpiry = 12 * 60;
     public GameMetadata()
     {
@@ -27,4 +27,5 @@ public class GameMetadata
     public int Bet = 0;
     public int Turn = 1;
     public int GameExpiry = 30 * 60;
+    public TimestampTag GameExpiryDisplay;
 }

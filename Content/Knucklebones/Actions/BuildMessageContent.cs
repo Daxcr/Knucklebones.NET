@@ -7,9 +7,9 @@ public static partial class Actions
     public static async Task<Embed> BuildPlayerEmbed(KBGameMetadata meta, bool initiator) =>
         new EmbedBuilder()
             .WithDescription($"""
-{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, !initiator)}
+{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, (meta.InitiatorTurn && initiator) || (!meta.InitiatorTurn && !initiator),!initiator)}
 **Points:** {meta.BuildPoints(initiator)}
-{((meta.InitiatorTurn && initiator) || (!meta.InitiatorTurn && !initiator) ? $"(Your turn!)" : string.Empty)}
+<@{(initiator ? meta.InitiatorID : meta.OpponentID)}> {((meta.InitiatorTurn && initiator) || (!meta.InitiatorTurn && !initiator) ? $"(Your turn!)" : string.Empty)}
 """)
             .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
             .WithColor((initiator && meta.InitiatorTurn) || (!initiator && !meta.InitiatorTurn) ? Color.LighterGrey : Color.Default)
@@ -18,27 +18,19 @@ public static partial class Actions
     public static async Task<Embed> BuildEndPlayerEmbed(KBGameMetadata meta, bool initiator, bool winner) =>
         new EmbedBuilder()
             .WithDescription($"""
-{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, !initiator)}
+{meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, (meta.InitiatorTurn && initiator) || (!meta.InitiatorTurn && !initiator), !initiator)}
 **Points:** {meta.BuildPoints(initiator)}
+<@{(initiator ? meta.InitiatorID : meta.OpponentID)}>
 """)
             .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
             .WithColor(winner ? Color.Gold : Color.Default)
             .Build();
 
-    public static Embed BuildDiceEmbed(KBGameMetadata meta)
-    {
-        if (meta.Guild == null)
-            return new EmbedBuilder()
-                .WithDescription($"""
-# {KBGameMetadata.DiceEmojis[$"dice{meta.CurrentDice}_single"]}
-Game will expire in {meta.GameExpiryDisplay}
-""")
-                .Build();
-        else
-            return new EmbedBuilder()
-                .WithDescription($"# {KBGameMetadata.DiceEmojis[$"dice{meta.CurrentDice}_single"]}")
-                .Build();
-    }
+    public static Embed BuildDiceEmbed(KBGameMetadata meta) =>
+        new EmbedBuilder()
+            .WithDescription($"-# Game expiring {meta.GameExpiryDisplay}")
+            .WithImageUrl($"https://cdn.dax.cr/knucklebones.net/die/dice{meta.CurrentDice}_mini.png")
+            .Build();
 
     public static MessageComponent BuildGameActions(KBGameMetadata meta, bool initiator)
     {

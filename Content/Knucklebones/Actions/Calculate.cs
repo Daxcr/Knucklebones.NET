@@ -32,7 +32,7 @@ public static partial class Actions
         UserData winner = initiatorWin ? initiator : opponent;
         UserData loser = initiatorWin ? opponent : initiator;
 
-        int addedDevotion = DevotionOnWin + (meta.Bet * 4);
+        int addedDevotion = DevotionOnWin + (meta.Bet * 6);
 
         string bar = ProfileModule.CalculateDevotionBar(
             ProfileModule.DevotionBarWidth,
@@ -41,21 +41,40 @@ public static partial class Actions
         );
 
         winner.Inventory.Coins += meta.Bet * 2;
+        long level = winner.Level;
         winner.AddDevotion(addedDevotion);
+        long godTearsToGive = winner.Level - level;
+        winner.Inventory.GodTears += godTearsToGive;
 
         await db.SaveChangesAsync();
 
-        return new EmbedBuilder()
-            .WithDescription($"""
-**Winner:** <@{winner.UserID}>
-{ProfileModule.GenericEmojis["coin"]} Coins: +{meta.Bet} ({winner.Inventory.Coins})
-{ProfileModule.GenericEmojis["devotion"]} Devotion: +{addedDevotion}
-{bar}
+        if (godTearsToGive == 0)
+            return new EmbedBuilder()
+                .WithDescription($"""
+    **Winner:** <@{winner.UserID}>
+    {ProfileModule.GenericEmojis["coin"]} Coins: +{meta.Bet} ({winner.Inventory.Coins})
+    {ProfileModule.GenericEmojis["devotion"]} Devotion: +{addedDevotion}
+    {bar}
 
-**Loser:** <@{loser.UserID}>
-{ProfileModule.GenericEmojis["coin"]} Coins: -{meta.Bet} ({loser.Inventory.Coins})
-""")
-            .WithColor(Color.Default)
-            .Build();
+    **Loser:** <@{loser.UserID}>
+    {ProfileModule.GenericEmojis["coin"]} Coins: -{meta.Bet} ({loser.Inventory.Coins})
+    """)
+                .WithColor(Color.Default)
+                .Build();
+        else
+            return new EmbedBuilder()
+                .WithDescription($"""
+    **Winner:** <@{winner.UserID}>
+    {ProfileModule.GenericEmojis["coin"]} Coins: +{meta.Bet} ({winner.Inventory.Coins})
+    {ProfileModule.GenericEmojis["devotion"]} Devotion: +{addedDevotion}
+    {bar}
+    You have levelled up! You are now at level {winner.Level}.
+    {ProfileModule.GenericEmojis["godtear"]} God Tears: +{godTearsToGive} ({winner.Inventory.GodTears})
+
+    **Loser:** <@{loser.UserID}>
+    {ProfileModule.GenericEmojis["coin"]} Coins: -{meta.Bet} ({loser.Inventory.Coins})
+    """)
+                .WithColor(Color.Default)
+                .Build();
     }
 }

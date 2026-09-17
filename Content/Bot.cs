@@ -74,6 +74,7 @@ public class BotClient
     public async Task Start(string token)
     {
         await interactions.AddModuleAsync<Knucklebones.KBGameModule>(null);
+        await interactions.AddModuleAsync<Flockade.FLGameModule>(null);
         await interactions.AddModuleAsync<ProfileModule>(null);
         await interactions.AddModuleAsync<ServerModule>(null);
 

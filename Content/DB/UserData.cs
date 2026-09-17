@@ -11,6 +11,7 @@ public class UserData
     public bool AcceptingGames { get; set; } = true;
     public long Level { get; set; } = 0;
     public long Devotion { get; set; } = 0;
+    public DateTime LastDevote { get; set; } = DateTime.UnixEpoch;
     public Banner? ActiveBanner { get; set; }
     public Inventory Inventory { get; set; } = new();
     public List<long> BlockedUserIDs { get; set; } = new();

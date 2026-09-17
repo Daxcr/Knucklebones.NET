@@ -18,10 +18,16 @@ public static partial class Actions
         
         if (meta != null)
         {
-            if (meta.OpponentID != user.Id)
+            if (meta.OpponentID != 0)
             {
-                await component.RespondAsync("This isn't for you.", ephemeral: true);
-                return;
+                if (meta.OpponentID != user.Id)
+                {
+                    await component.RespondAsync("This isn't for you.", ephemeral: true);
+                    return;
+                }
+            } else
+            {
+                meta.OpponentID = user.Id;
             }
 
             await component.DeferAsync();

@@ -9,6 +9,7 @@ namespace CotLMinigames;
 public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 {
     public const int DevotionBarWidth = 14;
+    public const int DevotionOnDevote = 10;
     public static Dictionary<string, string> DevotionSegments = new()
     {
         { "left_empty", "<:devotion_left_empty:1548911372106997820>" },
@@ -45,9 +46,10 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         Embed main = new EmbedBuilder()
             .WithTitle($"{user.GlobalName}'s profile")
             .WithDescription($"""
-**Coins {GenericEmojis["coin"]}:** {usermeta.Inventory.Coins}
-**Wool {GenericEmojis["wool"]}:** {usermeta.Inventory.Wool}
-**God Tears {GenericEmojis["godtear"]}:** {usermeta.Inventory.GodTears}
+**{GenericEmojis["coin"]} Coins:** {usermeta.Inventory.Coins}
+**{GenericEmojis["wool"]} Wool:** {usermeta.Inventory.Wool}
+**{GenericEmojis["godtear"]} God Tears:** {usermeta.Inventory.GodTears}
+
 **Wins:** {usermeta.Wins}
 **Games played:** {usermeta.GamesPlayed}
 """)
@@ -73,6 +75,78 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
             .Build();
 
         await FollowupAsync(embeds: [main, devotion], components: components);
+    }
+
+    [SlashCommand("devote", "Devote to somebody")]
+    public async Task Devote(IUser user)
+    {
+        if (user.Id == Context.User.Id)
+        {
+            await RespondAsync("You can't devote to yourself.");
+            return;
+        }
+        await DeferAsync();
+
+        var db = Database.Create();
+        UserData devotee = await Database.GetUser(Context.User.Id, db);
+        UserData devoted = await Database.GetUser(user.Id, db);
+
+        if ((DateTime.UtcNow - devotee.LastDevote).TotalHours < 1)
+        {
+            await FollowupAsync("You've already devoted to somebody in the last hour!");
+            return;
+        }
+
+        int coins = new Random().Next(1, 6);
+        long maxDevotion = CalculateMaxDevotion(devoted.Level);
+        long currentDevotion = devoted.Devotion;
+        
+        devotee.Inventory.Coins += coins;
+        devotee.LastDevote = DateTime.UtcNow;
+
+        long level = devoted.Level;
+        devoted.AddDevotion(DevotionOnDevote);
+        long godTearsToGive = devoted.Level - level;
+        devoted.Inventory.GodTears += godTearsToGive;
+
+        Embed embed;
+
+        if (godTearsToGive == 0)
+        {
+            embed = new EmbedBuilder()
+                .WithDescription($"""
+<@{Context.User.Id}>:
+{GenericEmojis["coin"]} Coins: +{coins} ({devotee.Inventory.Coins += coins})
+
+<@{user.Id}>:
+{GenericEmojis["devotion"]} Devotion: +{DevotionOnDevote}
+{CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
+**Level:** {devoted.Level}
+""")
+                .WithColor(Color.LighterGrey)
+                .Build();
+        } else
+        {
+            embed = new EmbedBuilder()
+                .WithDescription($"""
+<@{Context.User.Id}>:
+{GenericEmojis["coin"]} Coins: +{coins} ({devotee.Inventory.Coins += coins})
+
+<@{user.Id}>:
+{GenericEmojis["devotion"]} Devotion: +{DevotionOnDevote}
+
+{currentDevotion + DevotionOnDevote} / {maxDevotion}{GenericEmojis["devotion"]}
+{CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
+You have levelled up! You are now at level {devoted.Level}.
+{GenericEmojis["godtear"]} God Tears: +{godTearsToGive} ({devoted.Inventory.GodTears})
+""")
+                .WithColor(Color.LighterGrey)
+                .Build();
+        }
+
+        await FollowupAsync($"<@{Context.User.Id}> has devoted to <@{user.Id}>!", embed: embed);
+
+        await db.SaveChangesAsync();
     }
     public static long CalculateMaxDevotion(long level)
     {

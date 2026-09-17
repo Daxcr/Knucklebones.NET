@@ -69,7 +69,7 @@ public static partial class Actions
 
         if (initiatorScore == opponentScore)
         {
-            initiatorembed = await BuildEndPlayerEmbed(meta, true, false);
+            initiatorembed = await BuildEndPlayerEmbed(meta, true, false);  
             opponentembed = await BuildEndPlayerEmbed(meta, false, false);   
         } else
         {
@@ -78,7 +78,7 @@ public static partial class Actions
             if (initiatorScore > opponentScore)
             {
                 initiatorembed = await BuildEndPlayerEmbed(meta, true, true);
-                opponentembed = await BuildEndPlayerEmbed(meta, false, false);  
+                opponentembed = await BuildEndPlayerEmbed(meta, false, false);
             } else
             {
                 initiatorembed = await BuildEndPlayerEmbed(meta, true, false);
@@ -87,7 +87,7 @@ public static partial class Actions
         }
 
         if (meta.Guild == null)
-            await message.ModifyAsync(msg =>
+            await (message as RestFollowupMessage)!.ModifyAsync(msg =>
             {
                 msg.Components = null;
                 if (devotionEmbed != null)

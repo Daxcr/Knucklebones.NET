@@ -9,7 +9,6 @@ public class KBGameMetadata : GameMetadata
     public Table OpponentTable = new();
     public Table OpponentTableDiff = new();
     public byte CurrentDice = 1;
-    public TimestampTag GameExpiryDisplay;
 
     public struct Table
     {
@@ -76,6 +75,7 @@ public class KBGameMetadata : GameMetadata
     public static Dictionary<string, string> DiceEmojis = new()
     {
         { "empty", "<:empty:1549744968334315590>" },
+        { "empty_active", "<:empty_active:1550020358390812733>" },
 
         { "dice1_single", "<:dice1_single:1549203689435168808>" },
         { "dice1_double", "<:dice1_double:1549203687090421790>" },
@@ -139,42 +139,47 @@ public class KBGameMetadata : GameMetadata
     };
     public const string HorizontalTableSplit = "  ";
 
-    public string BuildTable(Table table, Table diff, bool invert = false)
+    public string BuildTable(Table table, Table diff, bool active, bool invert = false)
     {
         string row1;
         string row2;
         string row3;
         if (invert)
         {
-            row1 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 0);
-            row2 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 1);
-            row3 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 2);
+            row1 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 0, active);
+            row2 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 1, active);
+            row3 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 2, active);
         }
         else
         {
-            row1 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 2);
-            row2 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 1);
-            row3 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 0);
+            row1 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 2, active);
+            row2 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 1, active);
+            row3 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 0, active);
         }
 
         return row1 + "\n" + row2 + "\n" + row3 + "\n";
     }
-    private string BuildRow(List<byte> col1, List<byte> col2, List<byte> col3, List<byte> dif1, List<byte> dif2, List<byte> dif3, byte index)
+    private string BuildRow(List<byte> col1, List<byte> col2, List<byte> col3, List<byte> dif1, List<byte> dif2, List<byte> dif3, byte index, bool active)
     {
-        string item1 = BuildSingle(col1, dif1, index);
-        string item2 = BuildSingle(col2, dif2, index);
-        string item3 = BuildSingle(col3, dif3, index);
+        string item1 = BuildSingle(col1, dif1, index, active);
+        string item2 = BuildSingle(col2, dif2, index, active);
+        string item3 = BuildSingle(col3, dif3, index, active);
 
         return $"# {item1}{HorizontalTableSplit}{item2}{HorizontalTableSplit}{item3}";
     }
-    private string BuildSingle(List<byte> col, List<byte> dif, byte index)
+    private string BuildSingle(List<byte> col, List<byte> dif, byte index, bool active)
     {
         bool useDiff = false;
         byte number = col[index];
         if (number == 0)
         {
             if (dif[index] == 0)
-                return DiceEmojis["empty"];
+            {
+                if (active)
+                    return DiceEmojis["empty_active"];
+                else
+                    return DiceEmojis["empty"];
+            }
 
             useDiff = true;
             number = dif[index];
