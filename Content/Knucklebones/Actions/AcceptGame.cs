@@ -83,9 +83,9 @@ public static partial class Actions
             Embed diceEmbed = BuildDiceEmbed(meta);
 
             MessageComponent gameActions = new ComponentBuilder()
-                .WithButton("Left", $"play/left/{meta.ID}", ButtonStyle.Primary)
-                .WithButton("Middle", $"play/middle/{meta.ID}", ButtonStyle.Primary)
-                .WithButton("Right", $"play/right/{meta.ID}", ButtonStyle.Primary)
+                .WithButton("Left", $"play/left/{meta.ID}/1", ButtonStyle.Primary)
+                .WithButton("Middle", $"play/middle/{meta.ID}/1", ButtonStyle.Primary)
+                .WithButton("Right", $"play/right/{meta.ID}/1", ButtonStyle.Primary)
                 .Build();
 
             IUserMessage msg;

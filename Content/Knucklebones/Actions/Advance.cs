@@ -7,7 +7,6 @@ public static partial class Actions
 {
     public static async Task AdvanceLastMessage(KBGameMetadata meta, SocketMessageComponent component)
     {
-
         Embed initiatorembed = await BuildPlayerEmbed(meta, true, !meta.InitiatorTurn);
         Embed opponentembed = await BuildPlayerEmbed(meta, false, !meta.InitiatorTurn);   
 

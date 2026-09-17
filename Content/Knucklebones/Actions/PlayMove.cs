@@ -8,6 +8,7 @@ public static partial class Actions
     public static async Task PlayMove(string[] ButtonData, SocketMessageComponent component)
     {
         string gameID = ButtonData[2];
+        string turn = ButtonData[3];
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
         
         if (meta == null)
@@ -19,7 +20,11 @@ public static partial class Actions
             return;
         }
 
-        if ((component.User.Id != meta.InitiatorID && meta.InitiatorTurn) || (component.User.Id == meta.InitiatorID && !meta.InitiatorTurn))
+        if (
+            (component.User.Id != meta.InitiatorID && meta.InitiatorTurn) ||
+            (component.User.Id == meta.InitiatorID && !meta.InitiatorTurn) ||
+            int.Parse(turn) != meta.Turn
+        )
         {
             await component.RespondAsync("Not your turn", ephemeral: true);
             return;
