@@ -36,51 +36,45 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("profile", "View your or somebody else's profile")]
     public async Task Profile(IUser? user = null)
     {
-        try
-        {
-            if (user == null)
-                user = Context.User;
-            await DeferAsync();
+        if (user == null)
+            user = Context.User;
+        await DeferAsync();
 
-            using DatabaseContext db = Database.Create();
-            UserData? usermeta = await Database.GetUser(user.Id, db);
+        using DatabaseContext db = Database.Create();
+        UserData? usermeta = await Database.GetUser(user.Id, db);
 
-            Embed main = new EmbedBuilder()
-                .WithTitle($"{user.GlobalName}'s profile")
-                .WithDescription($"""
-    **{GenericEmojis["coin"]} Coins:** {usermeta.Inventory.Coins}
-    **{GenericEmojis["wool"]} Wool:** {usermeta.Inventory.Wool}
-    **{GenericEmojis["godtear"]} God Tears:** {usermeta.Inventory.GodTears}
+        Embed main = new EmbedBuilder()
+            .WithTitle($"{user.GlobalName}'s profile")
+            .WithDescription($"""
+**{GenericEmojis["coin"]} Coins:** {usermeta.Inventory.Coins}
+**{GenericEmojis["wool"]} Wool:** {usermeta.Inventory.Wool}
+**{GenericEmojis["godtear"]} God Tears:** {usermeta.Inventory.GodTears}
 
-    **Wins:** {usermeta.Wins}
-    **Games played:** {usermeta.GamesPlayed}
-    """)
-                .WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
-                .WithImageUrl("https://cdn.dax.cr/knucklebones.net/banners/default.png")
-                .WithColor(Color.Blue)
-                .Build();
+**Wins:** {usermeta.Wins}
+**Games played:** {usermeta.GamesPlayed}
+""")
+            .WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
+            .WithImageUrl("https://cdn.dax.cr/knucklebones.net/banners/default.png")
+            .WithColor(Color.Blue)
+            .Build();
 
-            long maxDevotion = CalculateMaxDevotion(usermeta.Level);
+        long maxDevotion = CalculateMaxDevotion(usermeta.Level);
 
-            Embed devotion = new EmbedBuilder()
-                .WithDescription($"""
-    {usermeta.Devotion} / {maxDevotion}{GenericEmojis["devotion"]}
-    {CalculateDevotionBar(DevotionBarWidth, usermeta.Devotion, maxDevotion)}
-    **Level:** {usermeta.Level}
-    """)
-                .WithColor(Color.LighterGrey)
-                .Build();
+        Embed devotion = new EmbedBuilder()
+            .WithDescription($"""
+{usermeta.Devotion} / {maxDevotion}{GenericEmojis["devotion"]}
+{CalculateDevotionBar(DevotionBarWidth, usermeta.Devotion, maxDevotion)}
+**Level:** {usermeta.Level}
+""")
+            .WithColor(Color.LighterGrey)
+            .Build();
 
-            MessageComponent components = new ComponentBuilder()
-                .WithButton("Edit your profile", $"editprofile", ButtonStyle.Secondary)
-                .WithButton("View your inventory", $"viewinventory", ButtonStyle.Secondary)
-                .Build();
+        MessageComponent components = new ComponentBuilder()
+            .WithButton("Edit your profile", $"editprofile", ButtonStyle.Secondary)
+            .WithButton("View your inventory", $"viewinventory", ButtonStyle.Secondary)
+            .Build();
 
-            await FollowupAsync(embeds: [main, devotion], components: components);
-        } catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
+        await FollowupAsync(embeds: [main, devotion], components: components);
     }
 
     [SlashCommand("devote", "Devote to somebody")]

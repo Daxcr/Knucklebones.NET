@@ -27,6 +27,11 @@ public static partial class Actions
                 }
             } else
             {
+                if (meta.InitiatorID == user.Id)
+                {
+                    await component.RespondAsync("You can't challenge yourself!", ephemeral: true);
+                    return;
+                }
                 meta.OpponentID = user.Id;
             }
 
