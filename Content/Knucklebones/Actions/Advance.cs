@@ -13,7 +13,7 @@ public static partial class Actions
         meta.CurrentDice = (byte)new Random().Next(1,7);       
         Embed diceEmbed = BuildDiceEmbed(meta);
 
-        MessageComponent gameActions = BuildGameActions(meta, meta.InitiatorTurn);
+        MessageComponent gameActions = BuildGameActions(meta, !meta.InitiatorTurn);
 
         if (meta.Guild == null)
             await component.ModifyOriginalResponseAsync(msg =>
