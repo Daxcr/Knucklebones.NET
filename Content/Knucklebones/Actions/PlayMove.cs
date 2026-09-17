@@ -7,8 +7,13 @@ public static partial class Actions
 {
     public static async Task PlayMove(string[] ButtonData, SocketMessageComponent component)
     {
+        Console.WriteLine("Button Pressed");
         string gameID = ButtonData[2];
         string turn = ButtonData[3];
+
+        Console.WriteLine(ButtonData[3]);
+        Console.WriteLine(component.User.Id);
+
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
         
         if (meta == null)
@@ -20,6 +25,10 @@ public static partial class Actions
             return;
         }
 
+        Console.WriteLine("IS PLAYER");
+        Console.WriteLine(int.Parse(turn) != meta.Turn);
+        Console.WriteLine(meta.Turn);
+
         if (
             (component.User.Id != meta.InitiatorID && meta.InitiatorTurn) ||
             (component.User.Id == meta.InitiatorID && !meta.InitiatorTurn) ||
@@ -30,10 +39,14 @@ public static partial class Actions
             return;
         }
 
+        Console.WriteLine("Deferring");
+
         await component.DeferAsync();
         string pressedbutton = ButtonData[1];
+        Console.WriteLine(pressedbutton);
 
         RecalculateTables(meta, pressedbutton);
+        Console.WriteLine("Tables recalculated");
 
         if (meta.InitiatorTable.IsFull() || meta.OpponentTable.IsFull())
         {
@@ -42,11 +55,11 @@ public static partial class Actions
         }
 
         await AdvanceLastMessage(meta, component);
-
-        await Task.Delay(500);
+        Console.WriteLine("Message advanced");
 
         meta.Turn += 1;
         meta.InitiatorTurn = !meta.InitiatorTurn;
+        Console.WriteLine($"Turn updated: {meta.Turn} {meta.InitiatorTurn}");
     }
 
     public static async Task DisableLastMessage(SocketMessageComponent component, string pressedbutton)
