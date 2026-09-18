@@ -5,7 +5,7 @@ namespace CotLMinigames.Knucklebones;
 
 public static partial class Actions
 {
-    public static async Task PlayMove(string[] ButtonData, SocketMessageComponent component)
+    public static async Task PlayMove(string[] ButtonData, SocketMessageComponent component, bool bot = false)
     {
         string gameID = ButtonData[2];
         string turn = ButtonData[3];
@@ -15,16 +15,16 @@ public static partial class Actions
         if (meta == null)
             return;
 
-        if (component.User.Id != meta.InitiatorID && component.User.Id != meta.OpponentID)
+        if (component.User.Id != meta.InitiatorID && component.User.Id != meta.OpponentID && !bot)
         {
             await component.RespondAsync("Not your game", ephemeral: true);
             return;
         }
 
         if (
-            (component.User.Id != meta.InitiatorID && meta.InitiatorTurn) ||
+            ((component.User.Id != meta.InitiatorID && meta.InitiatorTurn) ||
             (component.User.Id == meta.InitiatorID && !meta.InitiatorTurn) ||
-            int.Parse(turn) != meta.Turn || meta.Busy
+            int.Parse(turn) != meta.Turn || meta.Busy) && !bot
         )
         {
             await component.RespondAsync("Not your turn", ephemeral: true);
@@ -35,7 +35,9 @@ public static partial class Actions
 
         try
         {
-            await component.DeferAsync();
+            if (!bot)
+                await component.DeferAsync();
+
             string pressedbutton = ButtonData[1];
 
             RecalculateTables(meta, pressedbutton);
@@ -55,6 +57,67 @@ public static partial class Actions
         {
             meta.Busy = false;
         }
+
+        if (!bot && meta.OpponentID == BotClient.Client.CurrentUser.Id)
+        {
+            await Task.Delay(2000);
+            string response = await CalculateBotResponse(meta);
+            await PlayMove(["play", response, gameID, turn + 1], component, true);
+        }
+    }
+
+    private static async Task<string> CalculateBotResponse(KBGameMetadata meta)
+    {
+        byte dice = meta.CurrentDice;
+        KBGameMetadata.Table botTable = meta.OpponentTable;
+        KBGameMetadata.Table playerTable = meta.InitiatorTable;
+
+        int leftWeight = CalculateColumnWeight(botTable.Left, playerTable.Left, dice);
+        int middleWeight = CalculateColumnWeight(botTable.Middle, playerTable.Middle, dice);
+        int rightWeight = CalculateColumnWeight(botTable.Right, playerTable.Right, dice);
+
+        return ChooseColumn(leftWeight, middleWeight, rightWeight);
+    }
+
+    private static int CalculateColumnWeight(List<byte> botColumn, List<byte> playerColumn, byte dice)
+    {
+        int weight = new Random().Next(0, 5);
+        if (!botColumn.Contains(0))
+            return int.MinValue;
+        
+        if (!playerColumn.Contains(0) && dice > 3)
+            weight += 20;
+
+        weight += 30 * playerColumn.Count(item => item == dice);
+
+        if (botColumn.Contains(dice))
+            weight += 20;
+
+        return weight;
+    }
+
+    private static string ChooseColumn(int leftWeight, int middleWeight, int rightWeight)
+    {
+        List<(string Name, int Weight)> valid = new();
+
+        if (leftWeight >= 0) valid.Add(("left", leftWeight));
+        if (middleWeight >= 0) valid.Add(("middle", middleWeight));
+        if (rightWeight >= 0) valid.Add(("right", rightWeight));
+
+        if (valid.Count == 1)
+            return valid[0].Name;
+
+        List<(string Name, int Weight)> eligible;
+
+        if (!valid.Any(item => item.Weight > 50))
+            eligible = valid
+                .OrderBy(_ => new Random().Next())
+                .Take(2)
+                .ToList();
+        else
+            eligible = valid;
+
+        return eligible.OrderByDescending(item => item.Weight).First().Name;
     }
 
     public static async Task DisableLastMessage(SocketMessageComponent component, string pressedbutton)

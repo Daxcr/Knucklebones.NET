@@ -56,11 +56,15 @@ public class BotClient
             string[] buttondata = component.Data.CustomId.Split('/');
             switch (buttondata[0])
             {
-                case "acceptgame":
+                case "acceptkb":
                     _ = Knucklebones.Actions.AcceptGame(buttondata, component);
                     break;
 
-                case "declinegame":
+                case "acceptbotkb":
+                    _ = Knucklebones.Actions.AcceptBotGame(buttondata, component);
+                    break;
+
+                case "declinekb":
                     _ = Knucklebones.Actions.DeclineGame(buttondata, component);
                     break;
 

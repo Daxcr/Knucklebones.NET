@@ -42,6 +42,9 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("You can't challenge yourself! What a disappointment.", ephemeral: true);
             return;
         }
+        if (user?.Id == BotClient.Client.CurrentUser.Id)
+            bet = 0;
+            
         await DeferAsync();
 
         using DatabaseContext db = Database.Create();
@@ -86,31 +89,49 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
         Embed embed;
         MessageComponent components;
-        
-        if (user != null)
-        {
-            embed = new EmbedBuilder()
-                .WithTitle("Match request")
-                .WithDescription($"<@{user.Id}> has been challenged to a game of Knucklebones by <@{Context.User.Id}>.\nThis request will expire {expiry}.")
-                .WithColor(Color.Blue)
-                .Build();
 
-            components = new ComponentBuilder()
-                .WithButton("Accept", $"acceptgame/{meta.ID}", ButtonStyle.Success)
-                .WithButton("Decline", $"declinegame/{meta.ID}", ButtonStyle.Danger)
-                .Build();
-        }
-        else
+        switch (user)
         {
-            embed = new EmbedBuilder()
-                .WithTitle("Match request")
-                .WithDescription($"<@{Context.User.Id}> would like to be challenged to a game of Knucklebones.\nThis request will expire {expiry}.")
-                .WithColor(Color.Blue)
-                .Build();
+            case null:
+                embed = new EmbedBuilder()
+                    .WithTitle("Match request")
+                    .WithDescription($"<@{Context.User.Id}> would like to be challenged to a game of Knucklebones.\nThis request will expire {expiry}.")
+                    .WithColor(Color.Blue)
+                    .Build();
 
-            components = new ComponentBuilder()
-                .WithButton("Accept", $"acceptgame/{meta.ID}", ButtonStyle.Success)
-                .Build();
+                components = new ComponentBuilder()
+                    .WithButton("Accept", $"acceptkb/{meta.ID}", ButtonStyle.Success)
+                    .Build();
+                break;
+
+            default:
+                if (user.Id == BotClient.Client.CurrentUser.Id)
+                {
+                    embed = new EmbedBuilder()
+                        .WithTitle("Match request")
+                        .WithDescription($"<@{Context.User.Id}> is wanting to challenge me.\nThis request will expire {expiry}.")
+                        .WithColor(Color.Blue)
+                        .Build();
+
+                    components = new ComponentBuilder()
+                        .WithButton("Go!", $"acceptbotkb/{meta.ID}", ButtonStyle.Success)
+                        .Build();
+                }
+                else
+                {
+                    embed = new EmbedBuilder()
+                        .WithTitle("Match request")
+                        .WithDescription($"<@{user.Id}> has been challenged to a game of Knucklebones by <@{Context.User.Id}>.\nThis request will expire {expiry}.")
+                        .WithColor(Color.Blue)
+                        .Build();
+
+                    components = new ComponentBuilder()
+                        .WithButton("Accept", $"acceptkb/{meta.ID}", ButtonStyle.Success)
+                        .WithButton("Decline", $"declinekb/{meta.ID}", ButtonStyle.Danger)
+                        .Build();
+                }
+
+                break;
         }
         
 
