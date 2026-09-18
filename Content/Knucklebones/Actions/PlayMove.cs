@@ -112,7 +112,7 @@ public static partial class Actions
 
         List<(string Name, int Weight)> eligible;
 
-        if (!valid.Any(item => item.Weight > 50))
+        if (!valid.Any(item => item.Weight >= 50))
             eligible = valid
                 .OrderBy(_ => new Random().Next())
                 .Take(2)
