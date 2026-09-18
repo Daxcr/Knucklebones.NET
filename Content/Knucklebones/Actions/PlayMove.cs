@@ -88,10 +88,13 @@ public static partial class Actions
         if (!playerColumn.Contains(0) && dice > 3)
             weight += 20;
 
+        if (playerColumn.Count(item => item != 0) == 2 && dice > 4)
+            weight += 50;
+
         weight += 30 * playerColumn.Count(item => item == dice);
 
         if (botColumn.Contains(dice))
-            weight += 20;
+            weight += 25;
 
         return weight;
     }
