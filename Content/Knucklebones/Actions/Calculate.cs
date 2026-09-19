@@ -52,12 +52,12 @@ public static partial class Actions
             return new EmbedBuilder()
                 .WithDescription($"""
     **Winner:** <@{winner.UserID}>
-    {ProfileModule.GenericEmojis["coin"]} Coins: +{meta.Bet} ({winner.Inventory.Coins})
-    {ProfileModule.GenericEmojis["devotion"]} Devotion: +{addedDevotion}
+    {BotClient.Emojis.Coin} Coins: +{meta.Bet} ({winner.Inventory.Coins})
+    {BotClient.Emojis.Devotion} Devotion: +{addedDevotion}
     {bar}
 
     **Loser:** <@{loser.UserID}>
-    {ProfileModule.GenericEmojis["coin"]} Coins: -{meta.Bet} ({loser.Inventory.Coins})
+    {BotClient.Emojis.Coin} Coins: -{meta.Bet} ({loser.Inventory.Coins})
     """)
                 .WithColor(Color.Default)
                 .Build();
@@ -65,14 +65,14 @@ public static partial class Actions
             return new EmbedBuilder()
                 .WithDescription($"""
     **Winner:** <@{winner.UserID}>
-    {ProfileModule.GenericEmojis["coin"]} Coins: +{meta.Bet} ({winner.Inventory.Coins})
-    {ProfileModule.GenericEmojis["devotion"]} Devotion: +{addedDevotion}
+    {BotClient.Emojis.Coin} Coins: +{meta.Bet} ({winner.Inventory.Coins})
+    {BotClient.Emojis.Devotion} Devotion: +{addedDevotion}
     {bar}
     You have levelled up! You are now at level {winner.Level}.
-    {ProfileModule.GenericEmojis["godtear"]} God Tears: +{godTearsToGive} ({winner.Inventory.GodTears})
+    {BotClient.Emojis.GodTear} God Tears: +{godTearsToGive} ({winner.Inventory.GodTears})
 
     **Loser:** <@{loser.UserID}>
-    {ProfileModule.GenericEmojis["coin"]} Coins: -{meta.Bet} ({loser.Inventory.Coins})
+    {BotClient.Emojis.Coin} Coins: -{meta.Bet} ({loser.Inventory.Coins})
     """)
                 .WithColor(Color.Default)
                 .Build();

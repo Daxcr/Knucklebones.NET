@@ -1,3 +1,4 @@
+using CotLMinigames.Flockade.Blessings;
 using Discord;
 
 namespace CotLMinigames.Flockade;
@@ -21,7 +22,8 @@ public class FLGameMetadata : GameMetadata
 
     public struct FlockPiece
     {
-        public List<Class> Classes = new();
+        public Class PieceType = new();
+        public List<IBlessing> Blessings = new();
         public FlockPiece() { }
 
         public enum Class

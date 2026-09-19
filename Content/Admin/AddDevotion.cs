@@ -17,7 +17,7 @@ public partial class AdminCommands
         UserData? usermeta = await Database.GetUser(userID, db);
 
         usermeta.AddDevotion(long.Parse(command[1]));
-        await message.Channel.SendMessageAsync($"Gave {command[1]} devotion{ProfileModule.GenericEmojis["devotion"]} to <@{userID}>");
+        await message.Channel.SendMessageAsync($"Gave {command[1]} devotion{BotClient.Emojis.Devotion} to <@{userID}>");
         await db.SaveChangesAsync();
     }
 }

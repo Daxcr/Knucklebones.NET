@@ -10,28 +10,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 {
     public const int DevotionBarWidth = 14;
     public const int DevotionOnDevote = 10;
-    public static Dictionary<string, string> DevotionSegments = new()
-    {
-        { "left_empty", "<:devotion_left_empty:1548911372106997820>" },
-        { "left_half", "<:devotion_left_half:1548911393435156580>" },
-        { "left_full", "<:devotion_left_full:1548911674147479602>" },
 
-        { "center_empty", "<:devotion_center_empty:1548913073669021756>" },
-        { "center_half", "<:devotion_center_half:1548913093881495624>" },
-        { "center_full", "<:devotion_center_full:1548913107466719283>" },
-
-        { "right_empty", "<:devotion_right_empty:1548912153107636305>" },
-        { "right_half", "<:devotion_right_half:1548912167125000232>" },
-        { "right_full", "<:devotion_right_full:1549540951247163473>" }
-    };
-
-    public static Dictionary<string, string> GenericEmojis = new()
-    {
-        { "devotion", "<:devotion:1548923541712543774>" },
-        { "coin", "<:coin:1548928750240931900>" },
-        { "wool", "<:wool:1549712729248497745>" },
-        { "godtear", "<:godtear:1549712752166305852>" },
-    };
 
     [SlashCommand("profile", "View your or somebody else's profile")]
     public async Task Profile(IUser? user = null)
@@ -46,9 +25,9 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         Embed main = new EmbedBuilder()
             .WithTitle($"{user.GlobalName}'s profile")
             .WithDescription($"""
-**{GenericEmojis["coin"]} Coins:** {usermeta.Inventory.Coins}
-**{GenericEmojis["wool"]} Wool:** {usermeta.Inventory.Wool}
-**{GenericEmojis["godtear"]} God Tears:** {usermeta.Inventory.GodTears}
+**{BotClient.Emojis.Coin} Coins:** {usermeta.Inventory.Coins}
+**{BotClient.Emojis.Wool} Wool:** {usermeta.Inventory.Wool}
+**{BotClient.Emojis.GodTear} God Tears:** {usermeta.Inventory.GodTears}
 
 **Wins:** {usermeta.Wins}
 **Games played:** {usermeta.GamesPlayed}
@@ -62,7 +41,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 
         Embed devotion = new EmbedBuilder()
             .WithDescription($"""
-{usermeta.Devotion} / {maxDevotion}{GenericEmojis["devotion"]}
+{usermeta.Devotion} / {maxDevotion}{BotClient.Emojis.Devotion}
 {CalculateDevotionBar(DevotionBarWidth, usermeta.Devotion, maxDevotion)}
 **Level:** {usermeta.Level}
 """)
@@ -116,10 +95,10 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
             embed = new EmbedBuilder()
                 .WithDescription($"""
 <@{Context.User.Id}>:
-{GenericEmojis["coin"]} Coins: +{coins} ({devotee.Inventory.Coins += coins})
+{BotClient.Emojis.Coin} Coins: +{coins} ({devotee.Inventory.Coins += coins})
 
 <@{user.Id}>:
-{GenericEmojis["devotion"]} Devotion: +{DevotionOnDevote}
+{BotClient.Emojis.Devotion} Devotion: +{DevotionOnDevote}
 {CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
 **Level:** {devoted.Level}
 """)
@@ -130,15 +109,15 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
             embed = new EmbedBuilder()
                 .WithDescription($"""
 <@{Context.User.Id}>:
-{GenericEmojis["coin"]} Coins: +{coins} ({devotee.Inventory.Coins += coins})
+{BotClient.Emojis.Coin} Coins: +{coins} ({devotee.Inventory.Coins})
 
 <@{user.Id}>:
-{GenericEmojis["devotion"]} Devotion: +{DevotionOnDevote}
+{BotClient.Emojis.Devotion} Devotion: +{DevotionOnDevote}
 
-{currentDevotion + DevotionOnDevote} / {maxDevotion}{GenericEmojis["devotion"]}
+{currentDevotion + DevotionOnDevote} / {maxDevotion}{BotClient.Emojis.Devotion}
 {CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
 You have levelled up! You are now at level {devoted.Level}.
-{GenericEmojis["godtear"]} God Tears: +{godTearsToGive} ({devoted.Inventory.GodTears})
+{BotClient.Emojis.GodTear} God Tears: +{godTearsToGive} ({devoted.Inventory.GodTears})
 """)
                 .WithColor(Color.LighterGrey)
                 .Build();
@@ -169,36 +148,45 @@ You have levelled up! You are now at level {devoted.Level}.
             {
                 if (devotion == 0)
                 {
-                    result += DevotionSegments["left_empty"];
-                } else if (devotion < segmentSize / 2)
-                {
-                    result += DevotionSegments["left_half"];
-                } else
-                {
-                    result += DevotionSegments["left_full"];
+                    result += BotClient.Emojis.DevotionLeftEmpty;
                 }
-            } else if (i == barWidth - 1)
+                else if (devotion < segmentSize / 2)
+                {
+                    result += BotClient.Emojis.DevotionLeftHalf;
+                }
+                else
+                {
+                    result += BotClient.Emojis.DevotionLeftFull;
+                }
+            }
+            else if (i == barWidth - 1)
             {
                 if (devotion < iterationValue)
                 {
-                    result += DevotionSegments["right_empty"];
-                } else if (devotion < maxDevotion)
-                {
-                    result += DevotionSegments["right_half"];
-                } else
-                {
-                    result += DevotionSegments["right_full"];
+                    result += BotClient.Emojis.DevotionRightEmpty;
                 }
-            } else {
+                else if (devotion < maxDevotion)
+                {
+                    result += BotClient.Emojis.DevotionRightHalf;
+                }
+                else
+                {
+                    result += BotClient.Emojis.DevotionRightFull;
+                }
+            }
+            else
+            {
                 if (devotion < iterationValue)
                 {
-                    result += DevotionSegments["center_empty"];
-                } else if (devotion < iterationValue + (segmentSize / 2))
+                    result += BotClient.Emojis.DevotionCenterEmpty;
+                }
+                else if (devotion < iterationValue + (segmentSize / 2))
                 {
-                    result += DevotionSegments["center_half"];
-                } else
+                    result += BotClient.Emojis.DevotionCenterHalf;
+                }
+                else
                 {
-                    result += DevotionSegments["center_full"];
+                    result += BotClient.Emojis.DevotionCenterFull;
                 }
             }
         }

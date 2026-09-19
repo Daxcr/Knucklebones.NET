@@ -2,6 +2,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using CotLMinigames.Admin;
+using System.Text.Json;
 
 namespace CotLMinigames;
 
@@ -12,12 +13,20 @@ public class BotClient
     InteractionService interactions = new InteractionService(Client);
     public const string CommandPrefix = "$$";
     public static List<GameMetadata> Games = new();
+    public static Emojis Emojis = new();
     public static Dictionary<string, Func<SocketMessage, Task>> Commands = new()
     {
         { "devotion", AdminCommands.AddDevotion }
     };
     public BotClient()
     {
+        if (File.Exists("emojis.json"))
+        {
+            string text = File.ReadAllText("emojis.json");
+            Emojis = JsonSerializer.Deserialize<Emojis>(text)!;
+        }
+        Emojis.MapEmojis();
+        
         Client.Log += message =>
         {
             Console.WriteLine(message.ToString());
