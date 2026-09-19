@@ -95,7 +95,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
             embed = new EmbedBuilder()
                 .WithDescription($"""
 <@{Context.User.Id}>:
-{BotClient.Emojis.Coin} Coins: +{coins} ({devotee.Inventory.Coins += coins})
+{BotClient.Emojis.Coin} Coins: +{coins} ({devotee.Inventory.Coins})
 
 <@{user.Id}>:
 {BotClient.Emojis.Devotion} Devotion: +{DevotionOnDevote}
