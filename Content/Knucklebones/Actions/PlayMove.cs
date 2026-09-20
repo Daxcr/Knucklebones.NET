@@ -11,13 +11,29 @@ public static partial class Actions
         string turn = ButtonData[3];
 
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
-        
+            
         if (meta == null)
+        {
+            await component.RespondAsync("Something went wrong", ephemeral: true);
             return;
+        }
 
         if (component.User.Id != meta.InitiatorID && component.User.Id != meta.OpponentID && !bot)
         {
             await component.RespondAsync("Not your game", ephemeral: true);
+            return;
+        }
+
+        if (ButtonData[1] == "forfeit")
+        {
+            await component.DeferAsync();
+
+            meta.ForfeitSource = component;
+
+            MessageComponent forfeitComponent = new ComponentBuilder()
+                .WithButton("Yes, I forfeit", $"forfeitkb/{gameID}", ButtonStyle.Danger)
+                .Build();
+            await component.FollowupAsync("Forfeit game? The other player will be declared the winner.", ephemeral: true, components: forfeitComponent);
             return;
         }
 
@@ -44,7 +60,7 @@ public static partial class Actions
 
             if (meta.InitiatorTable.IsFull() || meta.OpponentTable.IsFull())
             {
-                EndGame(meta, component);
+                await EndGame(meta, component);
                 return;
             }
 
@@ -133,9 +149,9 @@ public static partial class Actions
         ButtonStyle rightStyle = pressedbutton == "right" ? ButtonStyle.Primary : ButtonStyle.Secondary;
 
         MessageComponent disabledComponents = new ComponentBuilder()
-            .WithButton("Left", $"play/left/disabled", leftStyle, disabled: true)
-            .WithButton("Middle", $"play/middle/disabled", middleStyle, disabled: true)
-            .WithButton("Right", $"play/right/disabled", rightStyle, disabled: true)
+            .WithButton("Left", $"playkb/left/disabled", leftStyle, disabled: true)
+            .WithButton("Middle", $"playkb/middle/disabled", middleStyle, disabled: true)
+            .WithButton("Right", $"playkb/right/disabled", rightStyle, disabled: true)
             .Build();
 
         await component.Message.ModifyAsync(msg => { msg.Components = disabledComponents; });

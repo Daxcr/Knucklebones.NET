@@ -128,7 +128,11 @@ public class Emojis
     public string DevotionRightHalf { get; set; } = "<:devotion_right_half:1548912167125000232>";
     public string DevotionRightFull { get; set; } = "<:devotion_right_full:1549540951247163473>";
 
-    // Generic
+    // Blessings; unfinished
+    public string BlessJust { get; set; } = "";
+    public string BlessFallen { get; set; } = "";
+
+    // Items
     public string Devotion { get; set; } = "<:devotion:1548923541712543774>";
     public string Coin { get; set; } = "<:coin:1548928750240931900>";
     public string Wool { get; set; } = "<:wool:1549712729248497745>";

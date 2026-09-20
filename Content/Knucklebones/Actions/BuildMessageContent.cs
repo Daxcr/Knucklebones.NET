@@ -36,9 +36,10 @@ public static partial class Actions
     {
         KBGameMetadata.Table table = initiator ? meta.InitiatorTable : meta.OpponentTable;
         return new ComponentBuilder()
-            .WithButton("Left", $"play/left/{meta.ID}/{meta.Turn + 1}", ButtonStyle.Primary, disabled: !table.Left.Contains(0))
-            .WithButton("Middle", $"play/middle/{meta.ID}/{meta.Turn + 1}", ButtonStyle.Primary, disabled: !table.Middle.Contains(0))
-            .WithButton("Right", $"play/right/{meta.ID}/{meta.Turn + 1}", ButtonStyle.Primary, disabled: !table.Right.Contains(0))
+            .WithButton("Left", $"playkb/left/{meta.ID}/{meta.Turn + 1}", ButtonStyle.Primary, disabled: !table.Left.Contains(0))
+            .WithButton("Middle", $"playkb/middle/{meta.ID}/{meta.Turn + 1}", ButtonStyle.Primary, disabled: !table.Middle.Contains(0))
+            .WithButton("Right", $"playkb/right/{meta.ID}/{meta.Turn + 1}", ButtonStyle.Primary, disabled: !table.Right.Contains(0))
+            .WithButton("Forfeit", $"playkb/forfeit/{meta.ID}/0", ButtonStyle.Danger)
             .Build();
     }
 }

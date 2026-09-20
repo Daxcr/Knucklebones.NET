@@ -29,4 +29,5 @@ public class GameMetadata
     public int Turn = 1;
     public int GameExpiry = 30 * 60;
     public TimestampTag GameExpiryDisplay;
+    public SocketMessageComponent? ForfeitSource;
 }

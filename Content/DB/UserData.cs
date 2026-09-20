@@ -74,7 +74,7 @@ public class UserData
     }
     internal void WrapDevotion()
     {
-        if (Devotion > ProfileModule.CalculateMaxDevotion(Level))
+        if (Devotion >= ProfileModule.CalculateMaxDevotion(Level))
         {
             Devotion -= ProfileModule.CalculateMaxDevotion(Level);
             Level += 1;

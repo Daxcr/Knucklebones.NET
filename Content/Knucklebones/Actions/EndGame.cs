@@ -6,7 +6,7 @@ namespace CotLMinigames.Knucklebones;
 
 public static partial class Actions
 {
-    public static async void EndGame(KBGameMetadata meta, SocketMessageComponent component)
+    public static async Task EndGame(KBGameMetadata meta, SocketMessageComponent component)
     {
         if (!BotClient.Games.Contains(meta))
             return;

@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using CotLMinigames.Admin;
 using System.Text.Json;
+using System.ComponentModel;
 
 namespace CotLMinigames;
 
@@ -77,8 +78,30 @@ public class BotClient
                     _ = Knucklebones.Actions.DeclineGame(buttondata, component);
                     break;
 
-                case "play":
+                case "playkb":
                     _ = Knucklebones.Actions.PlayMove(buttondata, component);
+                    break;
+
+                case "forfeitkb":
+                    _ = Knucklebones.Actions.ForfeitGame(buttondata, component);
+                    break;
+
+                default:
+                    MessageComponent errorButtons = new ComponentBuilder()
+                        .WithButton("Yell at @daxcr", style: ButtonStyle.Link, url: "https://discord.com/invite/6vbhdzmGq7")
+                        .Build();
+                    await component.RespondAsync($"""
+Unknown component :(
+If you are viewing this in production, yell at `@daxcr`
+```Button ID: {component.Data.CustomId}
+Component ID: {component.Id}
+Guild ID: {component.GuildId}
+Channel ID: {component.ChannelId}
+Interaction user: @{component.User.Username} ({component.User.Id})
+Context type: {component.ContextType}
+Time (UTC): {DateTime.UtcNow}
+```
+""", components: errorButtons);
                     break;
             }
         };

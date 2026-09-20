@@ -20,9 +20,10 @@ public class FLGameMetadata : GameMetadata
         public bool IsFull() => !Data.Contains(null);
     }
 
-    public struct FlockPiece
+    public class FlockPiece
     {
         public Class PieceType = new();
+        public byte Position = new();
         public List<IBlessing> Blessings = new();
         public FlockPiece() { }
 
@@ -56,5 +57,23 @@ public class FLGameMetadata : GameMetadata
             Joker,
             RottenPlus
         }
-    } 
+
+        public void ChangedPosition(byte newPosition)
+        {
+            Position = newPosition;
+            foreach (IBlessing blessing in Blessings)
+                Position = newPosition;
+        }
+    }
+
+    public static Dictionary<Type, string?> BlessingRegistry = new();
+
+    public static void RegisterBlessings()
+    {
+        AddBlessing<Just>(BotClient.Emojis.BlessJust);
+        AddBlessing<Fallen>(BotClient.Emojis.BlessFallen);
+    }
+
+    public static void AddBlessing<Blessing>(string Emoji) where Blessing : IBlessing =>
+        BlessingRegistry.Add(typeof(Blessing), Emoji);
 }
