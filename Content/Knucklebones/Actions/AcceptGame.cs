@@ -40,6 +40,11 @@ public static partial class Actions
             var db = Database.Create();
 
             UserData opponentObj = await Database.GetUser(meta.OpponentID, db);
+            if (opponentObj.Inventory.Coins < meta.Bet)
+            {
+                await component.FollowupAsync($"You don't have enough coins! {BotClient.Emojis.Coin} {opponentObj.Inventory.Coins}/{meta.Bet}");
+                return;
+            }
             opponentObj.Inventory.Coins -= meta.Bet;
 
             await db.SaveChangesAsync();
