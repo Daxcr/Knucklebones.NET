@@ -43,7 +43,7 @@ public static partial class Actions
 
             Embed embed = new EmbedBuilder()
                 .WithTitle("Match request (Accepted)")
-                .WithDescription($"<@{meta.InitiatorID}> is wanting to challenge me.\nThis request was accepted {expiry}.")
+                .WithDescription($"<@{meta.InitiatorID}> would like to challenge me.\nThis request was accepted {expiry}.")
                 .WithColor(Color.Green)
                 .Build();
                 

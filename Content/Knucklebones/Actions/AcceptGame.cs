@@ -61,7 +61,7 @@ public static partial class Actions
 
             Embed embed = new EmbedBuilder()
                 .WithTitle("Match request (Accepted)")
-                .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was accepted {expiry}.")
+                .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was accepted {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
                 .WithColor(Color.Green)
                 .Build();
                 

@@ -112,7 +112,7 @@ Time (UTC): {DateTime.UtcNow}
         await interactions.AddModuleAsync<Knucklebones.KBGameModule>(null);
         await interactions.AddModuleAsync<Flockade.FLGameModule>(null);
         await interactions.AddModuleAsync<ProfileModule>(null);
-        await interactions.AddModuleAsync<ServerModule>(null);
+        // await interactions.AddModuleAsync<ServerModule>(null);
 
         await Client.LoginAsync(TokenType.Bot, token);
         await Client.StartAsync();

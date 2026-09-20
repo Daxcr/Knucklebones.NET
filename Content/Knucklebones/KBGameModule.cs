@@ -109,7 +109,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
                 {
                     embed = new EmbedBuilder()
                         .WithTitle("Match request")
-                        .WithDescription($"<@{Context.User.Id}> is wanting to challenge me.\nThis request will expire {expiry}.")
+                        .WithDescription($"<@{Context.User.Id}> would like to challenge me.\nThis request will expire {expiry}.")
                         .WithColor(Color.Blue)
                         .Build();
 
@@ -121,7 +121,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
                 {
                     embed = new EmbedBuilder()
                         .WithTitle("Match request")
-                        .WithDescription($"<@{user.Id}> has been challenged to a game of Knucklebones by <@{Context.User.Id}>.\nThis request will expire {expiry}.")
+                        .WithDescription($"<@{user.Id}> has been challenged to a game of Knucklebones by <@{Context.User.Id}>.\nThis request will expire {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
                         .WithColor(Color.Blue)
                         .Build();
 
@@ -172,7 +172,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
             {
                 embed = new EmbedBuilder()
                     .WithTitle("Match request (Expired)")
-                    .WithDescription($"<@{opponentID}> has been challenged to a game of Knucklebones by <@{initiatorID}>.\nThis request expired {expiry}.")
+                    .WithDescription($"<@{opponentID}> has been challenged to a game of Knucklebones by <@{initiatorID}>.\nThis request expired {expiry}. \n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
                     .WithColor(Color.DarkerGrey)
                     .Build();
                     
@@ -184,7 +184,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
             {
                 embed = new EmbedBuilder()
                     .WithTitle("Match request (Expired)")
-                    .WithDescription($"<@{initiatorID}> would like to be challenged to a game of Knucklebones.\nThis request expired {expiry}.")
+                    .WithDescription($"<@{initiatorID}> would like to be challenged to a game of Knucklebones.\nThis request expired {expiry}. \n\nBet: {BotClient.Emojis.Coin}{meta.Bet}")
                     .WithColor(Color.DarkerGrey)
                     .Build();
                     
