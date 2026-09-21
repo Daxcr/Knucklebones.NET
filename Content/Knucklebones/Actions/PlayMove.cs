@@ -87,73 +87,112 @@ public static partial class Actions
         byte dice = meta.CurrentDice;
         KBGameMetadata.Table botTable = meta.OpponentTable;
         KBGameMetadata.Table playerTable = meta.InitiatorTable;
-
-        int leftWeight = CalculateColumnWeight(botTable.Left, playerTable.Left, dice);
-        int middleWeight = CalculateColumnWeight(botTable.Middle, playerTable.Middle, dice);
-        int rightWeight = CalculateColumnWeight(botTable.Right, playerTable.Right, dice);
-
-        return ChooseColumn(leftWeight, middleWeight, rightWeight);
-    }
-
-    private static int CalculateColumnWeight(List<byte> botColumn, List<byte> playerColumn, byte dice)
-    {
-        int weight = new Random().Next(0, 5);
-        if (!botColumn.Contains(0))
-            return int.MinValue;
         
-        if (!playerColumn.Contains(0) && dice > 3)
-            weight += 20;
+        Dictionary<byte, string> columns = new()
+        {
+            { 0, "left" },
+            { 1, "middle" },
+            { 2, "right" },
+        };
 
-        if (botColumn.Count(item => item != 0) != 2)
-            weight += 8;
+        string idealColumn;
 
-        weight += 30 * playerColumn.Count(item => item == dice);
-
-        if (botColumn.Contains(dice))
-            weight += 25;
-
-        if (botColumn.Count(item => item == dice) == 2)
-            weight += 30;
-
-        return weight;
-    }
-
-    private static string ChooseColumn(int leftWeight, int middleWeight, int rightWeight)
-    {
-        List<(string Name, int Weight)> valid = new();
-
-        if (leftWeight >= 0) valid.Add(("left", leftWeight));
-        if (middleWeight >= 0) valid.Add(("middle", middleWeight));
-        if (rightWeight >= 0) valid.Add(("right", rightWeight));
-
-        if (valid.Count == 1)
-            return valid[0].Name;
-
-        List<(string Name, int Weight)> eligible;
-
-        if (!valid.Any(item => item.Weight >= 50))
-            eligible = valid
-                .OrderBy(_ => new Random().Next())
-                .Take(2)
-                .ToList();
+        if (botTable.HowManyEmptySpaces() > 5 && playerTable.HowManyEmptySpaces() > 6) // Spread at the start of the game 
+            idealColumn = columns[AISpread(meta)];
         else
-            eligible = valid;
+            idealColumn = columns[AIAggro(meta)];
 
-        return eligible.OrderByDescending(item => item.Weight).First().Name;
+        return idealColumn;
     }
 
-    public static async Task DisableLastMessage(SocketMessageComponent component, string pressedbutton)
+    private static byte AISpread(KBGameMetadata meta)
     {
-        ButtonStyle leftStyle = pressedbutton == "left" ? ButtonStyle.Primary : ButtonStyle.Secondary;
-        ButtonStyle middleStyle = pressedbutton == "middle" ? ButtonStyle.Primary : ButtonStyle.Secondary;
-        ButtonStyle rightStyle = pressedbutton == "right" ? ButtonStyle.Primary : ButtonStyle.Secondary;
+        byte dice = meta.CurrentDice;
+        KBGameMetadata.Table botTable = meta.OpponentTable;
+        KBGameMetadata.Table playerTable = meta.InitiatorTable;
 
-        MessageComponent disabledComponents = new ComponentBuilder()
-            .WithButton("Left", $"playkb/left/disabled", leftStyle, disabled: true)
-            .WithButton("Middle", $"playkb/middle/disabled", middleStyle, disabled: true)
-            .WithButton("Right", $"playkb/right/disabled", rightStyle, disabled: true)
-            .Build();
+        List<List<byte>> columns = new() { botTable.Left, botTable.Middle, botTable.Right };
+        List<List<byte>> playerColumns = new() { playerTable.Left, playerTable.Middle, playerTable.Right };
+        List<int> weights = new() { 0, 0, 0 };
 
-        await component.Message.ModifyAsync(msg => { msg.Components = disabledComponents; });
+        bool bigNumber = dice > 3;
+
+        foreach (List<byte> column in columns)
+        {
+            int index = columns.IndexOf(column);
+            List<byte> playerColumn = playerColumns[index];
+            float playerColumnAverage = (playerColumn[0] + playerColumn[1] + playerColumn[2]) / 3f;
+
+            if (!column.Contains(0))
+                weights[index] = -100000;
+
+            weights[index] += new Random().Next(0, 10);
+            weights[index] += column.Count(number => number == 0) * 30;
+
+            if (bigNumber && playerColumnAverage < 3.5)
+                weights[index] += 20;
+            else if (!bigNumber && playerColumnAverage < 3.5)
+                weights[index] -= 8;
+
+            if (bigNumber && playerColumn.Count(number => number == 0) == 3)
+                weights[index] -= 20;
+            else if (bigNumber && playerColumn.Count(number => number == 0) == 1)
+                weights[index] += 20;
+
+            weights[index] += playerColumn.Count(number => number == dice) * 10000;
+        }
+
+        return (byte)weights.IndexOf(weights.Max());
+    }
+
+    private static byte AIAggro(KBGameMetadata meta)
+    {
+        byte dice = meta.CurrentDice;
+        KBGameMetadata.Table botTable = meta.OpponentTable;
+        KBGameMetadata.Table playerTable = meta.InitiatorTable;
+
+        List<List<byte>> columns = new() { botTable.Left, botTable.Middle, botTable.Right };
+        List<List<byte>> playerColumns = new() { playerTable.Left, playerTable.Middle, playerTable.Right };
+        List<int> weights = new() { 0, 0, 0 };
+
+        foreach (List<byte> column in columns)
+        {
+            int index = columns.IndexOf(column);
+            List<byte> playerColumn = playerColumns[index];
+
+            if (!column.Contains(0))
+            {
+                weights[index] = -100000;
+                continue;
+            }
+
+            List<int> diffs = new();
+
+            for (byte i = 1; i < 7; i++)
+            {
+                List<byte> tempColumn = column.ToList();
+                List<byte> tempPlayerColumn = playerColumn.ToList();
+
+                int prePlayerPoints = KBGameMetadata.BuildColumnPoints(tempPlayerColumn);
+                int prePoints = KBGameMetadata.BuildColumnPoints(tempColumn);
+
+                for (int j = 0; j < 3; j++)
+                {
+                    if (tempPlayerColumn[j] == i)
+                        tempPlayerColumn[j] = 0;
+                }
+                tempColumn[tempColumn.IndexOf(0)] = i;
+
+                int postPlayerPoints = KBGameMetadata.BuildColumnPoints(tempPlayerColumn);
+                int postPoints = KBGameMetadata.BuildColumnPoints(tempColumn);
+
+                diffs.Add((postPoints - prePoints) + (prePlayerPoints - postPlayerPoints));
+            }
+
+            weights[index] = diffs[dice - 1] - diffs.Max();
+            weights[index] += column.Count(number => number == 0) * 10;
+        }
+
+        return (byte)weights.IndexOf(weights.Max());
     }
 }

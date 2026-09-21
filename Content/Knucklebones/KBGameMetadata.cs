@@ -29,6 +29,13 @@ public class KBGameMetadata : GameMetadata
 
         public bool IsFull() => !(Left.Contains(0) || Middle.Contains(0) || Right.Contains(0));
 
+        public byte HowManyEmptySpaces() =>
+            (byte)(
+                Left.Count(number => number == 0) +
+                Middle.Count(number => number == 0) +
+                Right.Count(number => number == 0)
+            );
+
         public void Add(string col, byte value, Table toClean)
         {
             switch (col)
@@ -138,7 +145,7 @@ public class KBGameMetadata : GameMetadata
         return BuildColumnPoints(table.Left) + BuildColumnPoints(table.Middle) + BuildColumnPoints(table.Right);
     }
 
-    private int BuildColumnPoints(List<byte> col)
+    public static int BuildColumnPoints(List<byte> col)
     {
         List<byte> checkedValues = new();
         int total = 0;
