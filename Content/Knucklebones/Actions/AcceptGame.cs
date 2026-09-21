@@ -37,7 +37,7 @@ public static partial class Actions
 
             await component.DeferAsync();
 
-            var db = Database.Create();
+            using var db = Database.Create();
 
             UserData opponentObj = await Database.GetUser(meta.OpponentID, db);
             if (opponentObj.Inventory.Coins < meta.Bet)

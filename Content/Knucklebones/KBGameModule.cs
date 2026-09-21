@@ -109,7 +109,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
                 {
                     embed = new EmbedBuilder()
                         .WithTitle("Match request")
-                        .WithDescription($"<@{Context.User.Id}> would like to challenge me.\nThis request will expire {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
+                        .WithDescription($"<@{Context.User.Id}> would like to challenge me.\nThis request will expire {expiry}.")
                         .WithColor(Color.Blue)
                         .Build();
 

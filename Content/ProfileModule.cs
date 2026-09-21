@@ -1,6 +1,8 @@
 using CotLMinigames.DB;
+using CotLMinigames.Knucklebones;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 
 namespace CotLMinigames;
 
@@ -31,6 +33,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 
 **Wins:** {usermeta.Wins}
 **Games played:** {usermeta.GamesPlayed}
+**Streak:** {usermeta.Streak}
 """)
             .WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
             .WithImageUrl("https://cdn.dax.cr/knucklebones.net/banners/default.png")
@@ -49,8 +52,9 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
             .Build();
 
         MessageComponent components = new ComponentBuilder()
-            .WithButton("Edit your profile", $"editprofile", ButtonStyle.Secondary)
-            .WithButton("View your inventory", $"viewinventory", ButtonStyle.Secondary)
+            .WithButton("Edit your profile", $"editprofile", ButtonStyle.Secondary, disabled: true) // Leaving these disabled for now while I implement them
+            .WithButton("View your inventory", $"viewinventory", ButtonStyle.Secondary, disabled: true)
+            .WithButton("Last ten games", $"lasttengames/{usermeta.UserID}", ButtonStyle.Secondary)
             .Build();
 
         await FollowupAsync(embeds: [main, devotion], components: components);
@@ -66,7 +70,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         }
         await DeferAsync();
 
-        var db = Database.Create();
+        using var db = Database.Create();
         UserData devotee = await Database.GetUser(Context.User.Id, db);
         UserData devoted = await Database.GetUser(user.Id, db);
 
@@ -198,5 +202,46 @@ You have levelled up! You are now at level {devoted.Level}.
     {
         IUser user = await BotClient.Client.GetUserAsync(uid);
         return user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
-    } 
+    }
+
+    public static async Task ShowLastTenGames(string[] buttondata, SocketMessageComponent component)
+    {
+        await component.DeferAsync();
+
+        using var db = Database.Create();
+        UserData userdata = await Database.GetUser(ulong.Parse(buttondata[1]), db);
+        IUser user = await BotClient.Client.GetUserAsync(userdata.UserID);
+
+        if (userdata.LastTenGames.Count == 0)
+        {
+            await component.FollowupAsync($"**{user.GlobalName}** has not played any games yet.");
+            return;
+        }
+
+        List<Embed> embeds = new();
+
+        foreach (GameMetadata meta in userdata.LastTenGames.AsEnumerable().Reverse())
+        {
+            if (meta is KBGameMetadata kbmeta)
+            {
+                string top = kbmeta.BuildTable(kbmeta.InitiatorTable, kbmeta.InitiatorTableDiff, false, small: true);
+                string bottom = kbmeta.BuildTable(kbmeta.OpponentTable, kbmeta.OpponentTableDiff, false, true, true);
+                
+                Embed embed = new EmbedBuilder()
+                    .WithTitle("Knucklebones")
+                    .WithDescription($"""
+**Bet:** {BotClient.Emojis.Coin} {meta.Bet}
+
+{top}<@{meta.InitiatorID}> | **Points:** {kbmeta.BuildPoints(true)}
+
+{bottom}<@{meta.OpponentID}> | **Points:** {kbmeta.BuildPoints(false)}
+""")
+                    .Build();
+                
+                embeds.Add(embed);
+            }
+        }
+
+        await component.FollowupAsync(embeds: embeds.ToArray());
+    }
 }

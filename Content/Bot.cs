@@ -86,6 +86,10 @@ public class BotClient
                     _ = Knucklebones.Actions.ForfeitGame(buttondata, component);
                     break;
 
+                case "lasttengames":
+                    _ = ProfileModule.ShowLastTenGames(buttondata, component);
+                    break;
+
                 default:
                     MessageComponent errorButtons = new ComponentBuilder()
                         .WithButton("Yell at @daxcr", style: ButtonStyle.Link, url: "https://discord.com/invite/6vbhdzmGq7")
