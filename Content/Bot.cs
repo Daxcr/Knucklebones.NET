@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using CotLMinigames.Admin;
 using System.Text.Json;
-using System.ComponentModel;
 
 namespace CotLMinigames;
 
@@ -17,7 +16,8 @@ public class BotClient
     public static Emojis Emojis = new();
     public static Dictionary<string, Func<SocketMessage, Task>> Commands = new()
     {
-        { "devotion", AdminCommands.AddDevotion }
+        { "devotion", AdminCommands.AddDevotion },
+        { "coins", AdminCommands.GiveCoins }
     };
     public BotClient()
     {
