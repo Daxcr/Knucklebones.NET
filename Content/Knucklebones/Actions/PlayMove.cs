@@ -76,7 +76,7 @@ public static partial class Actions
 
         if (!bot && meta.OpponentID == BotClient.Client.CurrentUser.Id)
         {
-            await Task.Delay(2000);
+            await Task.Delay(1000);
             string response = await CalculateBotResponse(meta);
             await PlayMove(["play", response, gameID, turn + 1], component, true);
         }
@@ -97,10 +97,10 @@ public static partial class Actions
 
         string idealColumn;
 
-        if (botTable.HowManyEmptySpaces() > 5 && playerTable.HowManyEmptySpaces() > 6) // Spread at the start of the game 
-            idealColumn = columns[AISpread(meta)];
-        else
-            idealColumn = columns[AIAggro(meta)];
+        // if (botTable.HowManyEmptySpaces() > 5 && playerTable.HowManyEmptySpaces() > 6) // Spread at the start of the game 
+        //     idealColumn = columns[AISpread(meta)];
+        // else
+        idealColumn = columns[AIAggro(meta)];
 
         return idealColumn;
     }
@@ -147,6 +147,11 @@ public static partial class Actions
 
     private static byte AIAggro(KBGameMetadata meta)
     {
+        Random rnd = new Random();
+
+        int conservativeWeight = rnd.Next(0, 10);
+        int aggroWeight = rnd.Next(0, 10);
+        
         byte dice = meta.CurrentDice;
         KBGameMetadata.Table botTable = meta.OpponentTable;
         KBGameMetadata.Table playerTable = meta.InitiatorTable;
@@ -189,8 +194,24 @@ public static partial class Actions
                 diffs.Add((postPoints - prePoints) + (prePlayerPoints - postPlayerPoints));
             }
 
-            weights[index] = diffs[dice - 1] - diffs.Max();
-            weights[index] += column.Count(number => number == 0) * 10;
+            List<byte> tempPlayerColumnB = playerColumn.ToList();
+            for (int i = 0; i < 3; i++)
+            {
+                if (tempPlayerColumnB[i] == dice)
+                    tempPlayerColumnB[i] = 0;
+            }
+
+            List<byte> tempColumnB = column.ToList();
+            tempColumnB[column.IndexOf(0)] = dice;
+
+            int cWeight = (diffs[dice - 1] - diffs.Max()) * conservativeWeight * column.Count(number => number == 0);
+            int aWeight;
+            if (dice < 4)
+                aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
+            else
+                aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
+
+            weights[index] = cWeight - aggroWeight;
         }
 
         return (byte)weights.IndexOf(weights.Max());
