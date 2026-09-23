@@ -212,6 +212,7 @@ public static partial class Actions
                 aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
 
             weights[index] = cWeight - aggroWeight;
+            weights[index] += rnd.Next(-2, 2);
         }
 
         return (byte)weights.IndexOf(weights.Max());
