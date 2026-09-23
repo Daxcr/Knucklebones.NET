@@ -150,7 +150,7 @@ public static partial class Actions
         Random rnd = new Random();
 
         int conservativeWeight = rnd.Next(0, 10);
-        int aggroWeight = rnd.Next(0, 10);
+        // int aggroWeight = rnd.Next(0, 10);
         
         byte dice = meta.CurrentDice;
         KBGameMetadata.Table botTable = meta.OpponentTable;
@@ -205,13 +205,13 @@ public static partial class Actions
             tempColumnB[column.IndexOf(0)] = dice;
 
             int cWeight = (diffs[dice - 1] - diffs.Max()) * conservativeWeight * column.Count(number => number == 0);
-            int aWeight;
-            if (dice < 4)
-                aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
-            else
-                aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
+            //int aWeight;
+            //if (dice < 4)
+            //    aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
+            //else
+            //    aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
 
-            weights[index] = cWeight - aggroWeight;
+            weights[index] = cWeight;// - aWeight;
             weights[index] += rnd.Next(-2, 2);
         }
 
