@@ -60,7 +60,7 @@ public class UserContext
                     return InteractionContext?.Guild;
 
                 case CtxType.Component:
-                    return (InteractionContext?.User as SocketGuildUser)?.Guild;
+                    return (ComponentContext?.User as SocketGuildUser)?.Guild;
 
                 case CtxType.Message:
                     return (MessageContext?.Author as SocketGuildUser)?.Guild;
