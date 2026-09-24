@@ -54,7 +54,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         MessageComponent components = new ComponentBuilder()
             .WithButton("Edit your profile", $"editprofile", ButtonStyle.Secondary, disabled: true) // Leaving these disabled for now while I implement them
             .WithButton("View your inventory", $"viewinventory", ButtonStyle.Secondary, disabled: true)
-            .WithButton("Last ten games", $"lasttengames/{usermeta.UserID}", ButtonStyle.Secondary)
+            .WithButton("View last 4 games", $"lastfourgames/{usermeta.UserID}", ButtonStyle.Secondary)
             .Build();
 
         await FollowupAsync(embeds: [main, devotion], components: components);
@@ -204,7 +204,7 @@ You have levelled up! You are now at level {devoted.Level}.
         return user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
     }
 
-    public static async Task ShowLastTenGames(string[] buttondata, SocketMessageComponent component)
+    public static async Task ShowLastFourGames(string[] buttondata, SocketMessageComponent component)
     {
         await component.DeferAsync();
 
@@ -220,7 +220,7 @@ You have levelled up! You are now at level {devoted.Level}.
 
         List<Embed> embeds = new();
 
-        foreach (GameMetadata meta in userdata.LastTenGames.AsEnumerable().Reverse())
+        foreach (GameMetadata meta in userdata.LastTenGames.AsEnumerable().Reverse().Take(4))
         {
             if (meta is KBGameMetadata kbmeta)
             {
@@ -242,6 +242,6 @@ You have levelled up! You are now at level {devoted.Level}.
             }
         }
 
-        await component.FollowupAsync(embeds: embeds.ToArray());
+        await component.FollowupAsync(embeds: embeds.ToArray(), ephemeral: true);
     }
 }

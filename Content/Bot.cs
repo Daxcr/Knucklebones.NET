@@ -86,8 +86,8 @@ public class BotClient
                     _ = Knucklebones.Actions.ForfeitGame(buttondata, component);
                     break;
 
-                case "lasttengames":
-                    _ = ProfileModule.ShowLastTenGames(buttondata, component);
+                case "lastfourgames":
+                    _ = ProfileModule.ShowLastFourGames(buttondata, component);
                     break;
 
                 default:
