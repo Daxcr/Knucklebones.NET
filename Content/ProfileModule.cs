@@ -13,16 +13,20 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
     public const int DevotionBarWidth = 14;
     public const int DevotionOnDevote = 10;
 
-
     [SlashCommand("profile", "View your or somebody else's profile")]
     public async Task Profile(IUser? user = null)
     {
+        UserContext ctx = new(Context);
+        await Profile(ctx, user);
+    }
+    public static async Task Profile(UserContext Context, IUser? user = null)
+    {
         if (user == null)
             user = Context.User;
-        await DeferAsync();
+        await Context.DeferAsync();
 
         using DatabaseContext db = Database.Create();
-        UserData? usermeta = await Database.GetUser(user.Id, db);
+        UserData? usermeta = await Database.GetUser(user!.Id, db);
 
         Embed main = new EmbedBuilder()
             .WithTitle($"{user.GlobalName}'s profile")
@@ -57,26 +61,37 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
             .WithButton("View last 4 games", $"lastfourgames/{usermeta.UserID}", ButtonStyle.Secondary)
             .Build();
 
-        await FollowupAsync(embeds: [main, devotion], components: components);
+        await Context.FollowupAsync(embeds: [main, devotion], components: components);
     }
 
     [SlashCommand("devote", "Devote to somebody")]
     public async Task Devote(IUser user)
     {
-        if (user.Id == Context.User.Id)
+        UserContext ctx = new(Context);
+        await Devote(ctx, user);
+    }
+    public static async Task Devote(string[] ButtonData, SocketMessageComponent component)
+    {
+        UserContext ctx = new(component);
+        IUser user = await BotClient.Client.GetUserAsync(ulong.Parse(ButtonData[1]));
+        await Devote(ctx, user);
+    }
+    public static async Task Devote(UserContext Context, IUser user)
+    {
+        if (user.Id == Context.User?.Id)
         {
-            await RespondAsync("You can't devote to yourself.");
+            await Context.RespondAsync("You can't devote to yourself.", ephemeral: true);
             return;
         }
-        await DeferAsync();
+        await Context.DeferAsync();
 
         using var db = Database.Create();
-        UserData devotee = await Database.GetUser(Context.User.Id, db);
+        UserData devotee = await Database.GetUser(Context.User!.Id, db);
         UserData devoted = await Database.GetUser(user.Id, db);
 
         if ((DateTime.UtcNow - devotee.LastDevote).TotalHours < 1)
         {
-            await FollowupAsync("You've already devoted to somebody in the last hour!");
+            await Context.FollowupAsync("You've already devoted to somebody in the last hour!", ephemeral: true);
             return;
         }
 
@@ -127,7 +142,7 @@ You have levelled up! You are now at level {devoted.Level}.
                 .Build();
         }
 
-        await FollowupAsync($"<@{Context.User.Id}> has devoted to <@{user.Id}>!", embed: embed);
+        await Context.FollowupAsync($"<@{Context.User.Id}> has devoted to <@{user.Id}>!", embed: embed);
 
         await db.SaveChangesAsync();
     }

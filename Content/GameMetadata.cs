@@ -39,5 +39,5 @@ public class GameMetadata
     [JsonIgnore]
     public TimestampTag GameExpiryDisplay;
     [JsonIgnore]
-    public SocketMessageComponent? ForfeitSource;
+    public UserContext? ForfeitSource;
 }

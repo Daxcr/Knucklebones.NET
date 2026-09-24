@@ -13,18 +13,22 @@ public static partial class Actions
             return;
 
         string gameID = ButtonData[1];
-        IUser user = component.User;
+    }
+
+    public static async Task DeclineGame(UserContext Context ,string gameID)
+    {
+        IUser? user = Context.User;
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
         
         if (meta != null)
         {
-            if (meta.OpponentID != user.Id)
+            if (meta.OpponentID != user?.Id)
             {
-                await component.RespondAsync("This isn't for you.", ephemeral: true);
+                await Context.RespondAsync("This isn't for you.", ephemeral: true);
                 return;
             }
 
-            await component.DeferAsync();
+            await Context.DeferAsync();
 
             using DatabaseContext db = Database.Create();
             UserData? initiator = await Database.GetUser(meta.InitiatorID, db);
@@ -48,13 +52,13 @@ public static partial class Actions
                 .Build();
 
             if (meta.Guild == null)
-                await component.ModifyOriginalResponseAsync(message =>
+                await Context.ModifyOriginalResponseAsync(message =>
                 {
                     message.Embed = embed;
                     message.Components = disabledComponents;
                 });
             else
-                await component.Message.ModifyAsync(message =>
+                await Context.ModifyAsync(message =>
                 {
                     message.Embed = embed;
                     message.Components = disabledComponents;

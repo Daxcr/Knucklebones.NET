@@ -13,43 +13,49 @@ public static partial class Actions
             return;
 
         string gameID = ButtonData[1];
-        IUser user = component.User;
+
+        UserContext ctx = new(component);
+        await AcceptGame(ctx, gameID);
+    }
+    public static async Task AcceptGame(UserContext Context, string gameID)
+    {   
+        IUser? user = Context.User;
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
         
         if (meta != null)
         {
             if (meta.OpponentID != 0)
             {
-                if (meta.OpponentID != user.Id)
+                if (meta.OpponentID != user?.Id)
                 {
-                    await component.RespondAsync("This isn't for you.", ephemeral: true);
+                    await Context.RespondAsync("This isn't for you.", ephemeral: true);
                     return;
                 }
             } else
             {
-                if (meta.InitiatorID == user.Id)
+                if (meta.InitiatorID == user?.Id)
                 {
-                    await component.RespondAsync("You can't challenge yourself!", ephemeral: true);
+                    await Context.RespondAsync("You can't challenge yourself!", ephemeral: true);
                     return;
                 }
-                meta.OpponentID = user.Id;
+                meta.OpponentID = user!.Id;
             }
 
-            await component.DeferAsync();
+            await Context.DeferAsync();
 
             using var db = Database.Create();
 
             UserData opponentObj = await Database.GetUser(meta.OpponentID, db);
             if (opponentObj.Inventory.Coins < meta.Bet)
             {
-                await component.FollowupAsync($"You don't have enough coins! {BotClient.Emojis.Coin} {opponentObj.Inventory.Coins}/{meta.Bet}");
+                await Context.FollowupAsync($"You don't have enough coins! {BotClient.Emojis.Coin} {opponentObj.Inventory.Coins}/{meta.Bet}");
                 return;
             }
             opponentObj.Inventory.Coins -= meta.Bet;
 
             await db.SaveChangesAsync();
 
-            IMessageChannel channel = component.Channel;
+            IMessageChannel? channel = Context.Channel;
 
             IUser initiator = BotClient.Client.GetUser(meta.InitiatorID);
             IUser opponent = BotClient.Client.GetUser(meta.OpponentID);
@@ -75,7 +81,7 @@ public static partial class Actions
                 .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
                 .Build();
 
-            await component.ModifyOriginalResponseAsync(message =>
+            await Context.ModifyOriginalResponseAsync(message =>
             {
                 message.Embed = embed;
                 message.Components = disabledComponents;
@@ -94,20 +100,12 @@ public static partial class Actions
                 .WithButton("Forfeit", $"playkb/forfeit/{meta.ID}/0", ButtonStyle.Danger)
                 .Build();
 
-            IUserMessage msg;
+            IUserMessage? msg = await Context.FollowupAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
 
-            if (meta.Guild == null)
-            {
-                msg = await component.FollowupAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
-            }
-            else
-            {
-                msg = await component.Message.ReplyAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
-            }
+            UserContext ctx = new(msg!);
+            _ = WaitForGameExpiry(ctx, meta);
 
-            _ = WaitForGameExpiry(meta, msg);
-
-            if (component.Channel is SocketGuildChannel guildChannel && guildChannel.Guild != null)
+            if (Context.Channel is SocketGuildChannel guildChannel && guildChannel.Guild != null)
             {
                 RestUserMessage temp = (RestUserMessage)await meta.Channel!.SendMessageAsync($"<@{meta.InitiatorID}><@{meta.OpponentID}>"); // ghost ping! :D
                 await temp.DeleteAsync();

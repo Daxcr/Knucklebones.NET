@@ -7,43 +7,50 @@ public static partial class Actions
 {
     public static async Task PlayMove(string[] ButtonData, SocketMessageComponent component, bool bot = false)
     {
+        string pressedbutton = ButtonData[1];
         string gameID = ButtonData[2];
         string turn = ButtonData[3];
 
+        UserContext ctx = new(component);
+        await PlayMove(ctx, pressedbutton, gameID, turn, bot);
+    }
+
+    public static async Task PlayMove(UserContext Context, string pressedbutton, string gameID, string turn, bool bot)
+    {
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
             
         if (meta == null)
         {
-            await component.RespondAsync("Something went wrong", ephemeral: true);
+            await Context.RespondAsync("Something went wrong", ephemeral: true);
             return;
         }
 
-        if (component.User.Id != meta.InitiatorID && component.User.Id != meta.OpponentID && !bot)
+        if (Context.User?.Id != meta.InitiatorID && Context.User?.Id != meta.OpponentID && !bot)
         {
-            await component.RespondAsync("Not your game", ephemeral: true);
+            await Context.RespondAsync("Not your game", ephemeral: true);
             return;
         }
 
-        if (ButtonData[1] == "forfeit")
+        if (pressedbutton == "forfeit")
         {
-            await component.DeferAsync();
+            await Context.DeferAsync();
 
-            meta.ForfeitSource = component;
+            meta.ForfeitSource = Context;
 
             MessageComponent forfeitComponent = new ComponentBuilder()
                 .WithButton("Yes, I forfeit", $"forfeitkb/{gameID}", ButtonStyle.Danger)
                 .Build();
-            await component.FollowupAsync("Forfeit game? The other player will be declared the winner.", ephemeral: true, components: forfeitComponent);
+            await Context.FollowupAsync("Forfeit game? The other player will be declared the winner.", ephemeral: true, components: forfeitComponent);
             return;
         }
 
         if (
-            ((component.User.Id != meta.InitiatorID && meta.InitiatorTurn) ||
-            (component.User.Id == meta.InitiatorID && !meta.InitiatorTurn) ||
+            ((Context.User?.Id != meta.InitiatorID && meta.InitiatorTurn) ||
+            (Context.User?.Id == meta.InitiatorID && !meta.InitiatorTurn) ||
             int.Parse(turn) != meta.Turn || meta.Busy) && !bot
         )
         {
-            await component.RespondAsync("Not your turn", ephemeral: true);
+            await Context.RespondAsync("Not your turn", ephemeral: true);
             return;
         }
 
@@ -52,19 +59,17 @@ public static partial class Actions
         try
         {
             if (!bot)
-                await component.DeferAsync();
-
-            string pressedbutton = ButtonData[1];
+                await Context.DeferAsync();
 
             RecalculateTables(meta, pressedbutton);
 
             if (meta.InitiatorTable.IsFull() || meta.OpponentTable.IsFull())
             {
-                await EndGame(meta, component);
+                await EndGame(Context, meta);
                 return;
             }
 
-            await AdvanceLastMessage(meta, component);
+            await AdvanceLastMessage(Context, meta);
 
             meta.Turn += 1;
             meta.InitiatorTurn = !meta.InitiatorTurn;
@@ -76,9 +81,9 @@ public static partial class Actions
 
         if (!bot && meta.OpponentID == BotClient.Client.CurrentUser.Id)
         {
-            await Task.Delay(1000);
+            await Task.Delay(1200);
             string response = await CalculateBotResponse(meta);
-            await PlayMove(["play", response, gameID, turn + 1], component, true);
+            await PlayMove(Context, response, gameID, turn + 1, true);
         }
     }
 
@@ -95,66 +100,16 @@ public static partial class Actions
             { 2, "right" },
         };
 
-        string idealColumn;
-
-        // if (botTable.HowManyEmptySpaces() > 5 && playerTable.HowManyEmptySpaces() > 6) // Spread at the start of the game 
-        //     idealColumn = columns[AISpread(meta)];
-        // else
-        idealColumn = columns[AIAggro(meta)];
-
-        return idealColumn;
-    }
-
-    private static byte AISpread(KBGameMetadata meta)
-    {
-        byte dice = meta.CurrentDice;
-        KBGameMetadata.Table botTable = meta.OpponentTable;
-        KBGameMetadata.Table playerTable = meta.InitiatorTable;
-
-        List<List<byte>> columns = new() { botTable.Left, botTable.Middle, botTable.Right };
-        List<List<byte>> playerColumns = new() { playerTable.Left, playerTable.Middle, playerTable.Right };
-        List<int> weights = new() { 0, 0, 0 };
-
-        bool bigNumber = dice > 3;
-
-        foreach (List<byte> column in columns)
-        {
-            int index = columns.IndexOf(column);
-            List<byte> playerColumn = playerColumns[index];
-            float playerColumnAverage = (playerColumn[0] + playerColumn[1] + playerColumn[2]) / 3f;
-
-            if (!column.Contains(0))
-                weights[index] = -100000;
-
-            weights[index] += new Random().Next(0, 10);
-            weights[index] += column.Count(number => number == 0) * 30;
-
-            if (bigNumber && playerColumnAverage < 3.5)
-                weights[index] += 20;
-            else if (!bigNumber && playerColumnAverage < 3.5)
-                weights[index] -= 8;
-
-            if (bigNumber && playerColumn.Count(number => number == 0) == 3)
-                weights[index] -= 20;
-            else if (bigNumber && playerColumn.Count(number => number == 0) == 1)
-                weights[index] += 20;
-
-            weights[index] += playerColumn.Count(number => number == dice) * 10000;
-        }
-
-        return (byte)weights.IndexOf(weights.Max());
+        return columns[AIAggro(meta)];
     }
 
     private static byte AIAggro(KBGameMetadata meta)
     {
-        Random rnd = new Random();
-
-        int conservativeWeight = rnd.Next(0, 10);
-        // int aggroWeight = rnd.Next(0, 10);
-        
         byte dice = meta.CurrentDice;
         KBGameMetadata.Table botTable = meta.OpponentTable;
         KBGameMetadata.Table playerTable = meta.InitiatorTable;
+
+        Random rnd = new();
 
         List<List<byte>> columns = new() { botTable.Left, botTable.Middle, botTable.Right };
         List<List<byte>> playerColumns = new() { playerTable.Left, playerTable.Middle, playerTable.Right };
@@ -204,14 +159,9 @@ public static partial class Actions
             List<byte> tempColumnB = column.ToList();
             tempColumnB[column.IndexOf(0)] = dice;
 
-            int cWeight = (diffs[dice - 1] - diffs.Max()) * conservativeWeight * column.Count(number => number == 0);
-            //int aWeight;
-            //if (dice < 4)
-            //    aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
-            //else
-            //    aWeight = KBGameMetadata.BuildColumnPoints(tempPlayerColumnB) * aggroWeight;
+            int cWeight = (diffs[dice - 1] - diffs.Max()) * column.Count(number => number == 0);
 
-            weights[index] = cWeight;// - aWeight;
+            weights[index] = cWeight;
             weights[index] += rnd.Next(-2, 2);
         }
 

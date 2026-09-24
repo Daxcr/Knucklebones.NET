@@ -86,6 +86,14 @@ public class BotClient
                     _ = Knucklebones.Actions.ForfeitGame(buttondata, component);
                     break;
 
+                case "rematchkb":
+                    _ = Knucklebones.KBGameModule.Rematch(buttondata, component);
+                    break;
+                
+                case "devote":
+                    _ = ProfileModule.Devote(buttondata, component);
+                    break;
+
                 case "lastfourgames":
                     _ = ProfileModule.ShowLastFourGames(buttondata, component);
                     break;

@@ -37,15 +37,58 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         int bet = 0
     )
     {
-        if (Context.User.Id == user?.Id)
+        UserContext ctx = new(Context);
+        await Knucklebones(ctx, user, bet);
+    }
+
+    public static async Task Rematch(string[] ButtonData, SocketMessageComponent component)
+    {
+        try
         {
-            await RespondAsync("You can't challenge yourself! What a disappointment.", ephemeral: true);
+            ulong uid = component.User.Id;
+            ulong oldInitID = ulong.Parse(ButtonData[1]);
+            ulong oldOppID = ulong.Parse(ButtonData[2]);
+            int bet = int.Parse(ButtonData[3]);
+
+            ulong[] IDs = { oldInitID, oldOppID };
+            if (!IDs.Contains(uid))
+            {
+                await component.RespondAsync("You didn't play in this game. You can challenge a player with `/knucklebones`.", ephemeral: true);
+                return;
+            }
+
+            ulong newOppID = IDs[1 - IDs.IndexOf(uid)];
+            UserContext ctx = new(component);
+
+            IUser opponent = await BotClient.Client.GetUserAsync(newOppID);
+            if (component.Channel is IGuildChannel guildChannel)
+            {
+                IGuildUser? member = opponent as IGuildUser ?? await guildChannel.Guild.GetUserAsync(newOppID);
+                if (member == null)
+                {
+                    await component.RespondAsync("Your opponent no longer has access to this channel.");
+                    return;
+                }
+            }
+
+            await Knucklebones(ctx, opponent, bet);
+        } catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    public static async Task Knucklebones(UserContext Context, IUser? user = null, int bet = 0)
+    {
+        if (Context.User!.Id == user?.Id)
+        {
+            await Context.RespondAsync("You can't challenge yourself! What a disappointment.", ephemeral: true);
             return;
         }
         if (user?.Id == BotClient.Client.CurrentUser.Id)
             bet = 0;
             
-        await DeferAsync();
+        await Context.DeferAsync();
 
         using DatabaseContext db = Database.Create();
         UserData? initiator = await Database.GetUser(Context.User.Id, db);
@@ -56,20 +99,20 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
 
             if (opponent.Inventory.Coins < bet)
             {
-                await FollowupAsync($"Your opponent does not have enough coins: `{opponent.Inventory.Coins}/{bet}`");
+                await Context.FollowupAsync($"Your opponent does not have enough coins: `{opponent.Inventory.Coins}/{bet}`");
                 return;
             }
 
             if (!opponent.AcceptingGames)
             {
-                await FollowupAsync($"Your opponent isn't accepting games right now.");
+                await Context.FollowupAsync($"Your opponent isn't accepting games right now.");
                 return;
             }
         }
 
         if (initiator.Inventory.Coins < bet)
         {
-            await FollowupAsync($"You don't have enough coins: `{initiator.Inventory.Coins}/{bet}`");
+            await Context.FollowupAsync($"You don't have enough coins: `{initiator.Inventory.Coins}/{bet}`");
             return;
         }
 
@@ -144,17 +187,14 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         }
 
 
-        await FollowupAsync(ping, embed: embed, components: components);
-        IUserMessage message = await GetOriginalResponseAsync();
-        _ = WaitForChallengeExpiry(meta, Context.Interaction, Context.User.Id, user?.Id, expiry, bet);
+        await Context.FollowupAsync(ping, embed: embed, components: components);
+        _ = WaitForChallengeExpiry(Context, meta, Context.User.Id, user?.Id, expiry, bet);
 
         initiator.Inventory.Coins -= bet;
-        var entry = db.Entry(initiator.Inventory);
-        
         await db.SaveChangesAsync();
     }
 
-    public async static Task WaitForChallengeExpiry(KBGameMetadata meta, SocketInteraction interaction, ulong initiatorID, ulong? opponentID, TimestampTag expiry, int bet)
+    public async static Task WaitForChallengeExpiry(UserContext Context, KBGameMetadata meta, ulong initiatorID, ulong? opponentID, TimestampTag expiry, int bet)
     {
         await Task.Delay(GameMetadata.ChallengeExpiry * 1000);
 
@@ -193,7 +233,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
                     .Build();
             }
 
-            await interaction.ModifyOriginalResponseAsync(message =>
+            await Context.ModifyOriginalResponseAsync(message =>
             {
                 message.Embed = embed;
                 message.Components = disabledComponents;
