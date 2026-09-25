@@ -1,0 +1,246 @@
+@font-face {
+    font-family: Lexend;
+    src: url("/resources/lexend-light.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: Charm;
+    src: url("/resources/charm-regular.ttf") format("truetype");
+}
+
+@property --crust {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #1a1a1a;
+}
+
+@property --mantle {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #212121;
+}
+
+@property --base {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #333333;
+}
+
+@property --overlay {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #404040;
+}
+
+@property --overlay2 {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #494949;
+}
+
+@property --primary {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #ffe3ce;
+}
+
+@property --secondary {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #cec1ba;
+}
+
+@property --tertiary {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #968d88;
+}
+
+@property --accent {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #ffc997;
+}
+
+@property --shader-base {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #3d3d3d;
+}
+
+@property --shader-primary {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #daa77b;
+}
+
+@property --shader-accent {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: #ffffff;
+}
+
+:root {
+    --border-radius: 6px;
+    --font: Lexend;
+    --title-font: Charm;
+    --title-size: 2.78rem;
+    --subtitle-size: 1.67rem;
+    --button-width: 100px;
+    --button-height: calc(calc(var(--button-width) / 3) * 2);
+    --big-gap: 32px;
+    --gap: 24px;
+    --small-gap: 4px;
+    
+    transition:
+        --crust 0.8s ease,
+        --mantle 0.8s ease,
+        --base 0.8s ease,
+        --overlay 0.8s ease,
+        --overlay2 0.8s ease,
+        --primary 0.8s ease,
+        --secondary 0.8s ease,
+        --tertiary 0.8s ease,
+        --accent 0.8s ease,
+        --shader-base 0.8s ease,
+        --shader-primary 0.8s ease,
+        --shader-accent 0.8s ease;
+}
+
+:root.knucklebones {
+    --crust: #151515;
+    --mantle: #1e1e1e;
+    --base: #242424;
+    --overlay: #664040;
+    --overlay2: #804844;
+    --primary: #ffd9ce;
+    --secondary: #cebaba;
+    --tertiary: #968888;
+    --accent: #ff9a97;
+
+    --shader-base: #2e2727;
+    --shader-primary: #be3144;
+    --shader-accent: #e4c3a4;
+}
+
+:root.flockade {
+    --crust: #0d171f;
+    --mantle: #151515;
+    --base: #202020;
+    --overlay: #2c2a31;
+    --overlay2: #373541;
+    --primary: #cecece;
+    --secondary: #a9a9a9;
+    --tertiary: #9a9a9a;
+    --accent: #97deff;
+
+    --shader-base: #2b272e;
+    --shader-primary: #70c6e0;
+    --shader-accent: #a2ffe0;
+}
+
+:root.discord {
+    --crust: #1f1f1f;
+    --mantle: #252525;
+    --base: #383838;
+    --overlay: #48434e;
+    --overlay2: #554b5e;
+    --primary: #9959ff;
+    --secondary: #fdfdfd;
+    --tertiary: #dadada;
+    --accent: #9a64ff;
+
+    --shader-base: #4e4853;
+    --shader-primary: #b6a5d4;
+    --shader-accent: #ffffff;
+}
+
+body {
+    background-color: var(--base);
+    font-family: var(--font);
+    color: var(--secondary);
+}
+
+.subtitle {
+    color: var(--primary);
+    font-size: var(--subtitle-size);
+    font-weight: 600;
+    margin-bottom: var(--small-gap);
+}
+
+.title {
+    color: var(--accent);
+    font-size: var(--title-size);
+    font-family: var(--title-font);
+    text-shadow: 0 var(--small-gap) 0 var(--mantle);
+}
+
+.title-container {
+    margin-bottom: var(--big-gap);
+}
+
+.centerised-container {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.img-button {
+    width: var(--button-width);
+    height: var(--button-width);
+    background-color: var(--overlay);
+    box-shadow: 0 var(--small-gap) 0 var(--mantle);
+    border: 1px solid var(--overlay2);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--gap);
+    transition: transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.img-button img {
+    width: calc(var(--button-width) * 0.75);
+    height: calc(var(--button-width) * 0.75);
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.img-button:hover img {
+    opacity: 1;
+}
+
+.img-button.center-horizontal:hover {
+    transform: translateX(-50%) scale(1.06);
+    cursor: pointer;
+}
+
+.main-menu-item-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+}
+
+.main-menu-item-container {
+    width: 180px;
+}
+
+.center-horizontal {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bg-shader {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.force-left-aligned {
+    text-align: left;
+}

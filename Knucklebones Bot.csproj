@@ -19,4 +19,15 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="Rose\Rose.NET.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Rose/**/*.cs" />
+    <Compile Remove="Rose/**/*.cs" />
+    <EmbeddedResource Remove="Rose/**" />
+    <None Remove="Rose/**" />
+  </ItemGroup>
+
 </Project>

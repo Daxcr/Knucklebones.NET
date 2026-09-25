@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using CotLMinigames.Admin;
 using System.Text.Json;
+using CotLMinigames.Web;
 
 namespace CotLMinigames;
 
@@ -34,9 +35,20 @@ public class BotClient
             return Task.CompletedTask;
         };
 
+        bool commandsRegistered = false;
+
         Client.Ready += async () =>
         {
-            await interactions.RegisterCommandsGloballyAsync();
+            if (commandsRegistered) return;
+            commandsRegistered = true;
+
+            foreach (var command in interactions.SlashCommands)
+                await Client.CreateGlobalApplicationCommandAsync(ToProps(command));
+
+            foreach (var command in interactions.ContextCommands)
+                await Client.CreateGlobalApplicationCommandAsync(ToProps(command));
+
+            await RemoveStaleCommandsAsync();
         };
 
         Client.InteractionCreated += async interaction =>
@@ -121,14 +133,94 @@ Time (UTC): {DateTime.UtcNow}
 
     public async Task Start(string token)
     {
+        Server server = new()
+        {
+            Port = 12008,
+            Host = "127.0.0.1",
+            MaxRequestSize = 10 * 1024 * 1024,
+        };
+
         await interactions.AddModuleAsync<Knucklebones.KBGameModule>(null);
         await interactions.AddModuleAsync<Flockade.FLGameModule>(null);
         await interactions.AddModuleAsync<ProfileModule>(null);
-        // await interactions.AddModuleAsync<ServerModule>(null);
 
         await Client.LoginAsync(TokenType.Bot, token);
         await Client.StartAsync();
 
+        server.AcceptingConnections = true;
+
         await Task.Delay(-1);
+    }
+
+    public async Task RemoveStaleCommandsAsync()
+    {
+        var existingCommands = await Client.GetGlobalApplicationCommandsAsync();
+
+        HashSet<string> currentNames = interactions.SlashCommands.Select(command => command.Name)
+            .Concat(interactions.ContextCommands.Select(command => command.Name))
+            .ToHashSet();
+
+        foreach (SocketApplicationCommand existing in existingCommands)
+        {
+            if ((int)existing.Type == 4)
+                continue;
+
+            if (!currentNames.Contains(existing.Name))
+                await existing.DeleteAsync();
+        }
+    }
+
+    public static ApplicationCommandProperties ToProps(SlashCommandInfo command)
+    {
+        SlashCommandBuilder builder = new SlashCommandBuilder()
+            .WithName(command.Name)
+            .WithDescription(command.Description)
+            .WithIntegrationTypes(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)
+            .WithContextTypes(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel);
+
+        foreach (SlashCommandParameterInfo param in command.Parameters)
+            builder.AddOption(ToOptionBuilder(param));
+
+        return builder.Build();
+    }
+
+    public static SlashCommandOptionBuilder ToOptionBuilder(SlashCommandParameterInfo param)
+    {
+        var option = new SlashCommandOptionBuilder
+        {
+            Name = param.Name,
+            Description = param.Description,
+            Type = param.DiscordOptionType ?? ApplicationCommandOptionType.String,
+            IsRequired = param.IsRequired,
+            IsAutocomplete = param.IsAutocomplete,
+            MinValue = param.MinValue,
+            MaxValue = param.MaxValue,
+            MinLength = param.MinLength,
+            MaxLength = param.MaxLength
+        };
+
+        if (param.ChannelTypes is { Count: > 0 })
+            option.ChannelTypes = param.ChannelTypes.ToList();
+
+        if (param.Choices is { Count: > 0 })
+        {
+            option.Choices = param.Choices.Select(c => new ApplicationCommandOptionChoiceProperties
+            {
+                Name = c.Name,
+                Value = c.Value
+            }).ToList();
+        }
+
+        return option;
+    }
+
+    public static ApplicationCommandProperties ToProps(ContextCommandInfo command)
+    {
+        return command.CommandType switch
+        {
+            ApplicationCommandType.User => new UserCommandBuilder().WithName(command.Name).Build(),
+            ApplicationCommandType.Message => new MessageCommandBuilder().WithName(command.Name).Build(),
+            _ => throw new NotSupportedException($"Unsupported context command type: {command.CommandType}")
+        };
     }
 }
