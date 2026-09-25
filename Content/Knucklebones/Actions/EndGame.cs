@@ -43,7 +43,7 @@ public static partial class Actions
         }
 
         if (meta.Guild == null)
-            await Context.ModifyAsync(msg =>
+            await Context.ModifyOriginalResponseAsync(msg =>
             {
                 msg.Components = component2;
                 if (devotionEmbed != null)
