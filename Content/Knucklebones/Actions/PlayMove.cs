@@ -44,6 +44,13 @@ public static partial class Actions
             return;
         }
 
+        if (meta.Expired)
+        {
+            if (!bot)
+                await Context.DeferAsync();
+            return; // fuck you
+        }
+
         if (
             ((Context.User?.Id != meta.InitiatorID && meta.InitiatorTurn) ||
             (Context.User?.Id == meta.InitiatorID && !meta.InitiatorTurn) ||

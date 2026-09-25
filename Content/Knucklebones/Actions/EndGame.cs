@@ -1,6 +1,4 @@
 using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
 
 namespace CotLMinigames.Knucklebones;
 
@@ -8,6 +6,7 @@ public static partial class Actions
 {
     public static async Task EndGame(UserContext Context, KBGameMetadata meta)
     {
+        meta.Expired = true;
         if (!BotClient.Games.Contains(meta))
             return;
 

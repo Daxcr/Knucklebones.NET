@@ -26,6 +26,7 @@ public class GameMetadata
     public bool GameDeclined { get; set; } = false;
     public bool InitiatorTurn { get; set; }
     public bool Busy = false;
+    public bool Expired = false;
     public required ulong InitiatorID { get; set; }
     public required ulong OpponentID { get; set; }
     public required ulong? InitiatedChannelID { get; set; }
