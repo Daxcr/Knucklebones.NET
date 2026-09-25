@@ -13,6 +13,9 @@ public static partial class Actions
             return;
 
         string gameID = ButtonData[1];
+
+        UserContext ctx = new(component);
+        await DeclineGame(ctx, gameID);
     }
 
     public static async Task DeclineGame(UserContext Context ,string gameID)
