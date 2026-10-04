@@ -89,7 +89,7 @@
     --button-width: 100px;
     --button-height: calc(calc(var(--button-width) / 3) * 2);
     --big-gap: 32px;
-    --gap: 24px;
+    --gap: 12px;
     --small-gap: 4px;
     
     transition:
@@ -185,6 +185,7 @@ body {
     top: 50%;
     text-align: center;
     transform: translate(-50%, -50%);
+    width: 100%;
 }
 
 .img-button {
@@ -194,7 +195,7 @@ body {
     box-shadow: 0 var(--small-gap) 0 var(--mantle);
     border: 1px solid var(--overlay2);
     border-radius: var(--border-radius);
-    margin-bottom: var(--gap);
+    margin-bottom: var(--big-gap);
     transition: transform 0.1s ease;
     display: flex;
     align-items: center;
@@ -219,8 +220,10 @@ body {
 
 .main-menu-item-layout {
     display: flex;
+    width: 100%;
+    justify-content: center;
     flex-wrap: wrap;
-    gap: var(--gap);
+    gap: var(--big-gap);
 }
 
 .main-menu-item-container {
@@ -243,4 +246,27 @@ body {
 
 .force-left-aligned {
     text-align: left;
+}
+
+#content {
+    display: flex;
+    width: calc(100vw - var(--gap) * 2);
+    height: calc(100vh - var(--gap) * 2);
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: var(--gap);
+    background-color: var(--crust);
+    gap: var(--gap);
+}
+
+.item {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--base);
+    overflow: hidden;
 }

@@ -5,8 +5,11 @@
     <link rel="stylesheet" href="/resources/site.css">
 </head>
 <body>
-    <canvas class="bg-shader" data-fragment-url="/resources/shaders/bg.frag" data-vertex-url="/resources/shaders/bg.vert"></canvas>
+    <canvas class="bg-shader" data-fragment-url="/resources/shaders/bg2.frag" data-vertex-url="/resources/shaders/bg.vert"></canvas>
 </body>
 <script src="resources/lib/glslCanvas.js"></script>
 <script src="resources/bgShader.js"></script>
+<script>
+    window.dispatchEvent(new CustomEvent("display:refresh"));
+</script>
 </html>

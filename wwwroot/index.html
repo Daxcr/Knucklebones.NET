@@ -1,73 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cultcord (Web)</title>
-    <link rel="stylesheet" href="/resources/site.css">
+    <title>Cultcord</title>
+    <link rel="stylesheet" href="/resources/site.css?piss=2">
 </head>
 <body>
-    <canvas class="bg-shader" data-fragment-url="/resources/shaders/bg.frag" data-vertex-url="/resources/shaders/bg.vert"></canvas>
-
-    <div class="centerised-container">
-        <div class="title-container">
-            <div class="title">Cultcord</div>
-            <div>A fan-made recreation of Cult of the Lamb's minigames.</div>
-        </div>
-
-        <div class="main-menu-item-layout">
-            <div class="main-menu-item-container">
-                <div class="img-button center-horizontal" id="kb">
-                    <img src="/resources/images/kb.png">
-                </div>
-                <div class="subtitle">Knucklebones</div>
-                <div>A game of chance</div>
-            </div>
-
-            <div class="main-menu-item-container">
-                <div class="img-button center-horizontal" id="fl">
-                    <img src="/resources/images/fl.png">
-                </div>
-                <div class="subtitle">Flockade</div>
-                <div class="force-left-aligned">Sorry, not implemented yet. You can help by contributing to the GitHub repository!</div>
-            </div>
-
-            <div class="main-menu-item-container">
-                <div class="img-button center-horizontal" id="dsc">
-                    <img src="/resources/images/dsc.png">
-                </div>
-                <div class="subtitle">Get the bot</div>
-                <div class="force-left-aligned">Get the bot on Discord to challenge your friends and cast bets.</div>
-            </div>
-        </div>
+    <div id="content">
     </div>
 </body>
-<script src="resources/lib/glslCanvas.js"></script>
-<script src="resources/bgShader.js"></script>
+<script src="/resources/contentStitcher.js" type="module"></script>
+<script src="/resources/lib/glslCanvas.js"></script>
+<script src="/resources/bgShader.js"></script>
 <script>
-    const kb = document.getElementById("kb");
-    kb.addEventListener("mouseenter", () => {
-        document.documentElement.classList.add("knucklebones");
-    });
+    function RefreshContent()
+    {
+        document.querySelectorAll("#kb").forEach(el => {
+            el.addEventListener("mouseenter", () => document.documentElement.classList.add("knucklebones"));
+            el.addEventListener("mouseleave", () => document.documentElement.classList.remove("knucklebones"));
+        });
 
-    kb.addEventListener("mouseleave", () => {
-        document.documentElement.classList.remove("knucklebones");
-    });
+        document.querySelectorAll("#fl").forEach(el => {
+            el.addEventListener("mouseenter", () => document.documentElement.classList.add("flockade"));
+            el.addEventListener("mouseleave", () => document.documentElement.classList.remove("flockade"));
+        });
 
-    const fl = document.getElementById("fl");
-    fl.addEventListener("mouseenter", () => {
-        document.documentElement.classList.add("flockade");
-    });
+        document.querySelectorAll("#dsc").forEach(el => {
+            el.addEventListener("mouseenter", () => document.documentElement.classList.add("discord"));
+            el.addEventListener("mouseleave", () => document.documentElement.classList.remove("discord"));
+        });
+    }
 
-    fl.addEventListener("mouseleave", () => {
-        document.documentElement.classList.remove("flockade");
-    });
-
-    const dsc = document.getElementById("dsc");
-    dsc.addEventListener("mouseenter", () => {
-        document.documentElement.classList.add("discord");
-    });
-
-    dsc.addEventListener("mouseleave", () => {
-        document.documentElement.classList.remove("discord");
-    });
+    window.addEventListener("display:refresh", RefreshContent);
 </script>
 </html>
