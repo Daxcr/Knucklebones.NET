@@ -1,3 +1,5 @@
+// god help me
+
 using Discord;
 
 namespace CotLMinigames.Knucklebones;
@@ -9,7 +11,7 @@ public static partial class Actions
             .WithDescription($"""
 {meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, (initiatorTurn && initiator) || (!initiatorTurn && !initiator),!initiator)}
 **Points:** {meta.BuildPoints(initiator)}
-<@{(initiator ? meta.InitiatorID : meta.OpponentID)}> {((initiatorTurn && initiator) || (!initiatorTurn && !initiator) ? $"(Your turn!)" : string.Empty)}
+{(meta.OpponentID == ulong.Parse(BotClient.LAMB.ID!) && !initiator ? "The Lamb" : $"<@{(initiator ? meta.InitiatorID : meta.OpponentID)}>")} {((initiatorTurn && initiator) || (!initiatorTurn && !initiator) ? $"(Your turn!)" : string.Empty)}
 """)
             .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
             .WithColor((initiator && initiatorTurn) || (!initiator && !initiatorTurn) ? Color.LighterGrey : Color.Default)
@@ -20,7 +22,7 @@ public static partial class Actions
             .WithDescription($"""
 {meta.BuildTable(initiator ? meta.InitiatorTable : meta.OpponentTable, initiator ? meta.InitiatorTableDiff : meta.OpponentTableDiff, false, !initiator)}
 **Points:** {meta.BuildPoints(initiator)}
-<@{(initiator ? meta.InitiatorID : meta.OpponentID)}>
+{(meta.OpponentID == ulong.Parse(BotClient.LAMB.ID!) && !initiator ? "The Lamb" : $"<@{(initiator ? meta.InitiatorID : meta.OpponentID)}>")}
 """)
             .WithThumbnailUrl(await ProfileModule.GetProfilePicture(initiator ? meta.InitiatorID : meta.OpponentID))
             .WithColor(winner ? Color.Gold : Color.Default)
@@ -30,6 +32,7 @@ public static partial class Actions
         new EmbedBuilder()
             .WithDescription($"-# Game expiring {meta.GameExpiryDisplay}")
             .WithImageUrl($"https://cdn.dax.cr/knucklebones.net/die/dice{meta.CurrentDice}_mini.png")
+            .WithColor(Color.Default)
             .Build();
 
     public static MessageComponent BuildGameActions(KBGameMetadata meta, bool initiator)

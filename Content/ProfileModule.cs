@@ -28,8 +28,13 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         using DatabaseContext db = Database.Create();
         UserData? usermeta = await Database.GetUser(user!.Id, db);
 
+        string title = $"{user.GlobalName}'s profile";
+
+        if (user.Id == BotClient.Client.CurrentUser.Id)
+            title = $"Narinder's profile";
+
         Embed main = new EmbedBuilder()
-            .WithTitle($"{user.GlobalName}'s profile")
+            .WithTitle(title)
             .WithDescription($"""
 **{BotClient.Emojis.Coin} Coins:** {usermeta.Inventory.Coins}
 **{BotClient.Emojis.Wool} Wool:** {usermeta.Inventory.Wool}

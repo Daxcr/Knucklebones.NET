@@ -78,6 +78,53 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
+    public static async Task ChallengeBot(string[] ButtonData, SocketMessageComponent component)
+    {
+        KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == ButtonData[1]);
+        if (meta?.InitiatorID != component.User.Id)
+        {
+            MessageComponent button = new ComponentBuilder()
+                .WithButton("Acknowledge", "ACKNOWLEDGE", ButtonStyle.Danger)
+                .Build();
+
+            await component.RespondAsync("Woah! I regret to inform you, but this isn't for you.", ephemeral: true, components: button);
+            return;
+        }
+        UserContext ctx = new(component);
+
+        await Knucklebones(ctx, BotClient.Client.CurrentUser);
+
+        using DatabaseContext db = Database.Create();
+        UserData? initiator = await Database.GetUser(meta.InitiatorID, db);
+
+        initiator.Inventory.Coins += meta.Bet;
+
+        await db.SaveChangesAsync();
+
+        DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
+        TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
+
+        Embed embed = new EmbedBuilder()
+            .WithTitle("Match request (Cancelled)")
+            .WithDescription($"<@{meta.InitiatorID}> would like to be challenged to a game of Knucklebones.\nThis request was cancelled {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
+            .Build();
+            
+        MessageComponent disabledComponents = new ComponentBuilder()
+            .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
+            .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
+            .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
+            .Build();
+
+        await component.ModifyOriginalResponseAsync(message =>
+        {
+            message.Embed = embed;
+            message.Components = disabledComponents;
+        });
+
+        BotClient.Games.Remove(meta);
+        meta.GameDeclined = true;
+    }
+
     public static async Task Knucklebones(UserContext Context, IUser? user = null, int bet = 0)
     {
         if (Context.User!.Id == user?.Id)
@@ -144,11 +191,13 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
 
                 components = new ComponentBuilder()
                     .WithButton("Accept", $"acceptkb/{meta.ID}", ButtonStyle.Success)
+                    .WithButton("Challenge the Bot", $"challengebotkb/{meta.ID}", ButtonStyle.Secondary)
+                    .WithButton("Cancel", $"cancelkb/{meta.ID}", ButtonStyle.Secondary)
                     .Build();
                 break;
 
             default:
-                if (user.Id == BotClient.Client.CurrentUser.Id)
+                if (user.Id == BotClient.Client.CurrentUser.Id || user.Id == ulong.Parse(BotClient.LAMB.ID!))
                 {
                     embed = new EmbedBuilder()
                         .WithTitle("Match request")
@@ -171,6 +220,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
                     components = new ComponentBuilder()
                         .WithButton("Accept", $"acceptkb/{meta.ID}", ButtonStyle.Success)
                         .WithButton("Decline", $"declinekb/{meta.ID}", ButtonStyle.Danger)
+                        .WithButton("Cancel", $"cancelkb/{meta.ID}", ButtonStyle.Secondary)
                         .Build();
                 }
 
@@ -219,6 +269,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
                 disabledComponents = new ComponentBuilder()
                     .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
                     .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
+                    .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
                     .Build();
             } else
             {

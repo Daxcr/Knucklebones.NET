@@ -86,7 +86,7 @@ public static partial class Actions
             meta.Busy = false;
         }
 
-        if (!bot && meta.OpponentID == BotClient.Client.CurrentUser.Id)
+        if (!bot && (meta.OpponentID == BotClient.Client.CurrentUser.Id || meta.OpponentID == ulong.Parse(BotClient.LAMB.ID!)))
         {
             await Task.Delay(1200);
             string response = await CalculateBotResponse(meta);

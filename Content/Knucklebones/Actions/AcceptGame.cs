@@ -79,6 +79,7 @@ public static partial class Actions
             MessageComponent disabledComponents = new ComponentBuilder()
                 .WithButton("Accept", $"accept/disabled", ButtonStyle.Success, disabled: true)
                 .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
+                .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
                 .Build();
 
             await Context.ModifyOriginalResponseAsync(message =>

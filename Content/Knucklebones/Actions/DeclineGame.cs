@@ -52,6 +52,7 @@ public static partial class Actions
             MessageComponent disabledComponents = new ComponentBuilder()
                 .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
                 .WithButton("Decline", $"decline/disabled", ButtonStyle.Danger, disabled: true)
+                .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
                 .Build();
 
             if (meta.Guild == null)
