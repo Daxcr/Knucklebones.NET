@@ -107,7 +107,9 @@ public static partial class Actions
             { 2, "right" },
         };
 
-        return columns[AIAggro(meta)];
+        // fallback if model is unavailable
+        byte column = KBPolicy.ChooseColumn(botTable, playerTable, dice) ?? AIAggro(meta);
+        return columns[column];
     }
 
     private static byte AIAggro(KBGameMetadata meta)
