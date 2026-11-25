@@ -7,25 +7,17 @@ public static partial class Actions
 {
     public static async Task AdvanceLastMessage(UserContext Context, KBGameMetadata meta)
     {
-        Embed initiatorembed = await BuildPlayerEmbed(meta, true, !meta.InitiatorTurn);
-        Embed opponentembed = await BuildPlayerEmbed(meta, false, !meta.InitiatorTurn);   
-
-        meta.CurrentDice = (byte)new Random().Next(1,7);       
-        Embed diceEmbed = BuildDiceEmbed(meta);
-
-        MessageComponent gameActions = BuildGameActions(meta, !meta.InitiatorTurn);
+        meta.CurrentDice = (byte)new Random().Next(1,7);
 
         if (meta.Guild == null)
-            await Context.ModifyOriginalResponseAsync(msg =>
+            await Context.ModifyOriginalResponseAsync(async msg =>
             {
-                msg.Embeds = new Embed[] { initiatorembed, opponentembed, diceEmbed };
-                msg.Components = gameActions;
+                msg.Components = await BuildGameComponents(meta);
             });
         else
-            await Context.ModifyAsync(msg =>
+            await Context.ModifyAsync(async msg =>
             {
-                msg.Embeds = new Embed[] { initiatorembed, opponentembed, diceEmbed };
-                msg.Components = gameActions;
+                msg.Components = await BuildGameComponents(meta);
             });
     }
 }

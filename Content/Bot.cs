@@ -28,7 +28,7 @@ public class BotClient
             Emojis = JsonSerializer.Deserialize<Emojis>(text)!;
         }
         Emojis.MapEmojis();
-        
+
         Client.Log += message =>
         {
             Console.WriteLine(message.ToString());
@@ -109,7 +109,7 @@ public class BotClient
                 case "challengebotkb":
                     _ = Knucklebones.KBGameModule.ChallengeBot(buttondata, component);
                     break;
-                
+
                 case "devote":
                     _ = ProfileModule.Devote(buttondata, component);
                     break;

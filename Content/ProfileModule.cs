@@ -103,7 +103,7 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         int coins = new Random().Next(1, 6);
         long maxDevotion = CalculateMaxDevotion(devoted.Level);
         long currentDevotion = devoted.Devotion;
-        
+
         devotee.Inventory.Coins += coins;
         devotee.LastDevote = DateTime.UtcNow;
 
@@ -155,7 +155,7 @@ You have levelled up! You are now at level {devoted.Level}.
     {
         if (level == 0)
             return 35;
-        
+
         double log = Math.Log((level * 10) + 1);
         double raw = (log * 100) + 20 + (level * 40);
         return (long)Math.Floor(Math.Clamp(raw, 20, 1300));
@@ -226,42 +226,43 @@ You have levelled up! You are now at level {devoted.Level}.
 
     public static async Task ShowLastFourGames(string[] buttondata, SocketMessageComponent component)
     {
-        await component.DeferAsync();
+        await component.RespondAsync("This feature is currently lacking Components V2 support. I'll design this later.\n-# \\- Wise guy", ephemeral: true);
+//         await component.DeferAsync();
 
-        using var db = Database.Create();
-        UserData userdata = await Database.GetUser(ulong.Parse(buttondata[1]), db);
-        IUser user = await BotClient.Client.GetUserAsync(userdata.UserID);
+//         using var db = Database.Create();
+//         UserData userdata = await Database.GetUser(ulong.Parse(buttondata[1]), db);
+//         IUser user = await BotClient.Client.GetUserAsync(userdata.UserID);
 
-        if (userdata.LastTenGames.Count == 0)
-        {
-            await component.FollowupAsync($"**{user.GlobalName}** has not played any games yet.");
-            return;
-        }
+//         if (userdata.LastTenGames.Count == 0)
+//         {
+//             await component.FollowupAsync($"**{user.GlobalName}** has not played any games yet.");
+//             return;
+//         }
 
-        List<Embed> embeds = new();
+//         List<Embed> embeds = new();
 
-        foreach (GameMetadata meta in userdata.LastTenGames.AsEnumerable().Reverse().Take(4))
-        {
-            if (meta is KBGameMetadata kbmeta)
-            {
-                string top = kbmeta.BuildTable(kbmeta.InitiatorTable, kbmeta.InitiatorTableDiff, false, small: true);
-                string bottom = kbmeta.BuildTable(kbmeta.OpponentTable, kbmeta.OpponentTableDiff, false, true, true);
-                
-                Embed embed = new EmbedBuilder()
-                    .WithTitle("Knucklebones")
-                    .WithDescription($"""
-**Bet:** {BotClient.Emojis.Coin} {meta.Bet}
+//         foreach (GameMetadata meta in userdata.LastTenGames.AsEnumerable().Reverse().Take(4))
+//         {
+//             if (meta is KBGameMetadata kbmeta)
+//             {
+//                 string top = kbmeta.BuildTable(kbmeta.InitiatorTable, kbmeta.InitiatorTableDiff, false, small: true);
+//                 string bottom = kbmeta.BuildTable(kbmeta.OpponentTable, kbmeta.OpponentTableDiff, false, true, true);
 
-{top}<@{meta.InitiatorID}> | **Points:** {kbmeta.BuildPoints(true)}
+//                 Embed embed = new EmbedBuilder()
+//                     .WithTitle("Knucklebones")
+//                     .WithDescription($"""
+// **Bet:** {BotClient.Emojis.Coin} {meta.Bet}
 
-{bottom}<@{meta.OpponentID}> | **Points:** {kbmeta.BuildPoints(false)}
-""")
-                    .Build();
-                
-                embeds.Add(embed);
-            }
-        }
+// {top}<@{meta.InitiatorID}> | **Points:** {kbmeta.BuildPoints(true)}
 
-        await component.FollowupAsync(embeds: embeds.ToArray(), ephemeral: true);
+// {bottom}<@{meta.OpponentID}> | **Points:** {kbmeta.BuildPoints(false)}
+// """)
+//                     .Build();
+
+//                 embeds.Add(embed);
+//             }
+//         }
+
+//         await component.FollowupAsync(embeds: embeds.ToArray(), ephemeral: true);
     }
 }
