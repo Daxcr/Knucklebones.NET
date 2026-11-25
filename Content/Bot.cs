@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using CotLMinigames.Admin;
 using System.Text.Json;
+using CotLMinigames.Flockade;
 
 namespace CotLMinigames;
 
@@ -27,7 +28,8 @@ public class BotClient
             Emojis = JsonSerializer.Deserialize<Emojis>(text)!;
         }
         Emojis.MapEmojis();
-        
+        FLGameMetadata.RegisterBlessings();
+
         Client.Log += message =>
         {
             Console.WriteLine(message.ToString());
@@ -89,7 +91,15 @@ public class BotClient
                 case "rematchkb":
                     _ = Knucklebones.KBGameModule.Rematch(buttondata, component);
                     break;
-                
+
+                case "acceptfl":
+                    _ = Flockade.Actions.AcceptGame(buttondata, component);
+                    break;
+
+                case "choosepiecefl":
+                    _ = Flockade.Actions.SelectPosition(buttondata, component);
+                    break;
+
                 case "devote":
                     _ = ProfileModule.Devote(buttondata, component);
                     break;

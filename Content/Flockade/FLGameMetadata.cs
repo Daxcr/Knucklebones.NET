@@ -11,13 +11,22 @@ public class FLGameMetadata : GameMetadata
     public Table OpponentTableDiff = new();
     public byte Round = 1;
     public byte RoundsRequiredToWin = 2;
+    public bool LargeTables = false;
+
+    public List<FlockPiece> ServedPieces = new();
 
     public struct Table
     {
         public Table() { }
-        public List<FlockPiece?> Data = [null, null, null, null];
+        public List<FlockPiece?> Data = [null, null, null, null, null, null];
 
-        public bool IsFull() => !Data.Contains(null);
+        public bool IsFull(bool largeTables = false)
+        {
+            if (largeTables)
+                return !Data.Contains(null);
+            else
+                return !Data.Take(4).Any(item => item == null);
+        }
     }
 
     public class FlockPiece
@@ -26,6 +35,31 @@ public class FLGameMetadata : GameMetadata
         public byte Position = new();
         public List<IBlessing> Blessings = new();
         public FlockPiece() { }
+
+        private static IBlessing CreateRandomBlessing(Random rand)
+        {
+            if (BlessingRegistry.Count == 0)
+                RegisterBlessings();
+
+            Type[] keys = BlessingRegistry.Keys.ToArray();
+            Type type = keys[rand.Next(keys.Length)];
+            return (IBlessing)Activator.CreateInstance(type)!;
+        }
+
+        public static FlockPiece CreateRandomPiece()
+        {
+            Random rand = new();
+            List<IBlessing> blessings = new();
+
+            if (rand.Next(0, 2) < 1)
+                blessings.Add(CreateRandomBlessing(rand));
+
+            return new()
+            {
+                PieceType = (Class)rand.Next(0, 4),
+                Blessings = blessings
+            };
+        }
 
         public enum Class
         {
@@ -66,7 +100,8 @@ public class FLGameMetadata : GameMetadata
         }
     }
 
-    public static Dictionary<Type, string?> BlessingRegistry = new();
+    public static SortedDictionary<Type, string?> BlessingRegistry =
+        new(Comparer<Type>.Create((a, b) => string.CompareOrdinal(a.FullName, b.FullName)));
 
     public static void RegisterBlessings()
     {
@@ -75,5 +110,5 @@ public class FLGameMetadata : GameMetadata
     }
 
     public static void AddBlessing<Blessing>(string Emoji) where Blessing : IBlessing =>
-        BlessingRegistry.Add(typeof(Blessing), Emoji);
+        BlessingRegistry[typeof(Blessing)] = Emoji;
 }

@@ -74,7 +74,7 @@ public class Emojis
     public string Dice6TripleDelete { get; set; } = "<:dice6_triple_delete:1549203643943751801>";
 
     public string[][][]? DiceLookup;
-    
+
     public void MapEmojis()
     {
         DiceLookup =
@@ -129,8 +129,8 @@ public class Emojis
     public string DevotionRightFull { get; set; } = "<:devotion_right_full:1549540951247163473>";
 
     // Blessings; unfinished
-    public string BlessJust { get; set; } = "";
-    public string BlessFallen { get; set; } = "";
+    public string BlessJust { get; set; } = "[Just Emoji]";
+    public string BlessFallen { get; set; } = "[Fallen Emoji]";
 
     // Items
     public string Devotion { get; set; } = "<:devotion:1548923541712543774>";

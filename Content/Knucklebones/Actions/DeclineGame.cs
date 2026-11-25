@@ -18,11 +18,11 @@ public static partial class Actions
         await DeclineGame(ctx, gameID);
     }
 
-    public static async Task DeclineGame(UserContext Context ,string gameID)
+    public static async Task DeclineGame(UserContext Context, string gameID)
     {
         IUser? user = Context.User;
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
-        
+
         if (meta != null)
         {
             if (meta.OpponentID != user?.Id)
@@ -48,7 +48,7 @@ public static partial class Actions
                 .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was declined {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
                 .WithColor(Color.Red)
                 .Build();
-                
+
             MessageComponent disabledComponents = new ComponentBuilder()
                 .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
                 .WithButton("Decline", $"decline/disabled", ButtonStyle.Danger, disabled: true)
