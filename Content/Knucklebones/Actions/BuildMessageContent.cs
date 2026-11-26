@@ -14,19 +14,19 @@ public static partial class Actions
         ButtonBuilder leftButton = new ButtonBuilder()
             .WithLabel("Left")
             .WithCustomId($"playkb/left/{meta.ID}/{meta.Turn}")
-            .WithStyle(ButtonStyle.Secondary)
+            .WithStyle(ButtonStyle.Primary)
             .WithDisabled(!table.Left.Contains(0) || staticDisplay);
 
         ButtonBuilder middleButton = new ButtonBuilder()
             .WithLabel("Middle")
             .WithCustomId($"playkb/middle/{meta.ID}/{meta.Turn}")
-            .WithStyle(ButtonStyle.Secondary)
+            .WithStyle(ButtonStyle.Primary)
             .WithDisabled(!table.Middle.Contains(0) || staticDisplay);
 
         ButtonBuilder rightButton = new ButtonBuilder()
             .WithLabel("Right")
             .WithCustomId($"playkb/right/{meta.ID}/{meta.Turn}")
-            .WithStyle(ButtonStyle.Secondary)
+            .WithStyle(ButtonStyle.Primary)
             .WithDisabled(!table.Right.Contains(0) || staticDisplay);
 
         // Action rows
@@ -97,7 +97,7 @@ public static partial class Actions
         // Extra buttons
         ButtonBuilder helpButton = new ButtonBuilder()
             .WithLabel("How to Play")
-            .WithCustomId($"howtokb") // NOTE: ACTUALLY IMPLEMENT THIS EVENTUALLY
+            .WithCustomId($"howtokb/1/false")
             .WithStyle(ButtonStyle.Secondary);
 
         ButtonBuilder forfeitButton = new ButtonBuilder()

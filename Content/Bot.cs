@@ -110,6 +110,10 @@ public class BotClient
                     _ = Knucklebones.KBGameModule.ChallengeBot(buttondata, component);
                     break;
 
+                case "howtokb":
+                    _ = Knucklebones.Actions.HowToPlay(buttondata, component);
+                    break;
+
                 case "devote":
                     _ = ProfileModule.Devote(buttondata, component);
                     break;
@@ -138,6 +142,17 @@ Context type: {component.ContextType}
 Time (UTC): {DateTime.UtcNow}
 ```
 """, components: errorButtons);
+                    break;
+            }
+        };
+
+        Client.SelectMenuExecuted += async component =>
+        {
+            string[] menudata = component.Data.Values.ToArray();
+            switch (component.Data.CustomId)
+            {
+                case "howtokb-menu":
+                    _ = Knucklebones.Actions.HowToPlayMenu(menudata, component);
                     break;
             }
         };
