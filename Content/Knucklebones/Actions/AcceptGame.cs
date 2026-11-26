@@ -67,45 +67,56 @@ public static partial class Actions
             Random rnd = new();
             meta.InitiatorTurn = rnd.Next(0, 2) == 0;
 
-            DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
-            TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
-
-            Embed embed = new EmbedBuilder()
-                .WithTitle("Match request (Accepted)")
-                .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was accepted {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                .WithColor(Color.Green)
-                .Build();
-
-            MessageComponent disabledComponents = new ComponentBuilder()
-                .WithButton("Accept", $"accept/disabled", ButtonStyle.Success, disabled: true)
-                .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
-                .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
-                .Build();
-
-            await Context.ModifyOriginalResponseAsync(message =>
+            if (meta.Guild == null)
             {
-                message.Embed = embed;
-                message.Components = disabledComponents;
-            });
+                meta.CurrentDice = (byte)new Random().Next(1, 7);
 
-            meta.CurrentDice = (byte)new Random().Next(1, 7);
+                await Context.ModifyOriginalResponseAsync(async message =>
+                {
+                    message.Content = null;
+                    message.Embed = null;
+                    message.Embeds = null;
+                    message.Flags = MessageFlags.ComponentsV2;
+                    message.Components = await BuildGameComponents(meta);
+                });
 
-            // MessageComponent gameActions = new ComponentBuilder()
-            //     .WithButton("Left", $"playkb/left/{meta.ID}/1", ButtonStyle.Primary)
-            //     .WithButton("Middle", $"playkb/middle/{meta.ID}/1", ButtonStyle.Primary)
-            //     .WithButton("Right", $"playkb/right/{meta.ID}/1", ButtonStyle.Primary)
-            //     .WithButton("Forfeit", $"playkb/forfeit/{meta.ID}/0", ButtonStyle.Danger)
-            //     .Build();
-
-            IUserMessage? msg = await Context.FollowupAsync(components: await BuildGameComponents(meta));
-
-            UserContext ctx = new(msg!);
-            _ = WaitForGameExpiry(ctx, meta);
-
-            if (Context.Channel is SocketGuildChannel guildChannel && guildChannel.Guild != null)
+                _ = WaitForGameExpiry(Context, meta);
+            }
+            else
             {
-                RestUserMessage temp = (RestUserMessage)await meta.Channel!.SendMessageAsync($"<@{meta.InitiatorID}><@{meta.OpponentID}>"); // ghost ping! :D
-                await temp.DeleteAsync();
+                DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
+                TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
+
+                Embed embed = new EmbedBuilder()
+                    .WithTitle("Match request (Accepted)")
+                    .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was accepted {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
+                    .WithColor(Color.Green)
+                    .Build();
+
+                MessageComponent disabledComponents = new ComponentBuilder()
+                    .WithButton("Accept", $"accept/disabled", ButtonStyle.Success, disabled: true)
+                    .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
+                    .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
+                    .Build();
+
+                await Context.ModifyOriginalResponseAsync(message =>
+                {
+                    message.Embed = embed;
+                    message.Components = disabledComponents;
+                });
+
+                meta.CurrentDice = (byte)new Random().Next(1, 7);
+
+                IUserMessage? msg = await Context.FollowupAsync(components: await BuildGameComponents(meta));
+
+                UserContext ctx = new(msg!);
+                _ = WaitForGameExpiry(ctx, meta);
+
+                if (Context.Channel is SocketGuildChannel guildChannel)
+                {
+                    RestUserMessage temp = (RestUserMessage)await meta.Channel!.SendMessageAsync($"<@{meta.InitiatorID}><@{meta.OpponentID}>"); // ghost ping! :D
+                    await temp.DeleteAsync();
+                }
             }
         }
     }

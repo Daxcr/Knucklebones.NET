@@ -36,12 +36,18 @@ public static partial class Actions
         if (meta.Guild == null)
             await ctx.ModifyOriginalResponseAsync(async msg =>
             {
+                msg.Content = null;
+                msg.Embed = null;
+                msg.Embeds = null;
                 msg.Flags = MessageFlags.ComponentsV2;
                 msg.Components = endGameComponents;
             });
         else
             await ctx.ModifyAsync(async msg =>
             {
+                msg.Content = null;
+                msg.Embed = null;
+                msg.Embeds = null;
                 msg.Flags = MessageFlags.ComponentsV2;
                 msg.Components = endGameComponents;
             });
