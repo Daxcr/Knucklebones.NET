@@ -7,7 +7,7 @@ namespace CotLMinigames.Knucklebones;
 
 public static partial class Actions
 {
-    private static async Task<ContainerBuilder> CreateGameBody(KBGameMetadata meta, bool staticDisplay, IUser initiator, IUser opponent)
+    private static async Task<ContainerBuilder> CreateGameBody(KBGameMetadata meta, bool staticDisplay, IUser initiator, IUser opponent, int crown = -1)
     {
         KBGameMetadata.Table table = meta.InitiatorTurn ? meta.InitiatorTable : meta.OpponentTable;
 
@@ -15,19 +15,19 @@ public static partial class Actions
             .WithLabel("Left")
             .WithCustomId($"playkb/left/{meta.ID}/{meta.Turn}")
             .WithStyle(ButtonStyle.Primary)
-            .WithDisabled(!table.Left.Contains(0) || staticDisplay);
+            .WithDisabled(!table.Left.Contains(0));
 
         ButtonBuilder middleButton = new ButtonBuilder()
             .WithLabel("Middle")
             .WithCustomId($"playkb/middle/{meta.ID}/{meta.Turn}")
             .WithStyle(ButtonStyle.Primary)
-            .WithDisabled(!table.Middle.Contains(0) || staticDisplay);
+            .WithDisabled(!table.Middle.Contains(0));
 
         ButtonBuilder rightButton = new ButtonBuilder()
             .WithLabel("Right")
             .WithCustomId($"playkb/right/{meta.ID}/{meta.Turn}")
             .WithStyle(ButtonStyle.Primary)
-            .WithDisabled(!table.Right.Contains(0) || staticDisplay);
+            .WithDisabled(!table.Right.Contains(0));
 
         // Action rows
         ActionRowBuilder actionRow = new ActionRowBuilder()
@@ -64,20 +64,21 @@ public static partial class Actions
         string opPointsStr = opPoints.ToString() + (opPoints == 1 ? " point" : " points");
         ContainerBuilder body = new ContainerBuilder()
             // Player 1
-            .WithTextDisplay($"## {initiator.GlobalName}{(meta.InitiatorTurn && !staticDisplay ? " (Your turn)" : "")}\n-# {inPointsStr}")
+            .WithTextDisplay($"## {initiator.GlobalName + (crown == 0 ? " :crown:" : "")}{(meta.InitiatorTurn && !staticDisplay ? " (Your turn)" : "")}\n-# {inPointsStr}")
             .WithSection(section1) // Board
 
             .WithSeparator()
 
             // Player 2
-            .WithTextDisplay($"## {(string.IsNullOrEmpty(opponent.GlobalName) ? opponent.Username : opponent.GlobalName)}{(!meta.InitiatorTurn && !staticDisplay ? " (Your turn)" : "")}\n-# {opPointsStr}")
-            .WithSection(section2) // Board
+            .WithTextDisplay($"## {(string.IsNullOrEmpty(opponent.GlobalName) ? opponent.Username : opponent.GlobalName) + (crown == 1 ? " :crown:" : "")}{(!meta.InitiatorTurn && !staticDisplay ? " (Your turn)" : "")}\n-# {opPointsStr}")
+            .WithSection(section2); // Board
 
-            .WithSeparator()
-
-            // Bottom
-            .WithTextDisplay($"Dice:\n# > {(staticDisplay ? BotClient.Emojis.Empty : BotClient.Emojis.DiceLookup![meta.CurrentDice - 1][0][0])}")
-            .WithActionRow(actionRow);
+        // Bottom
+        if (!staticDisplay)
+            body
+                .WithSeparator()
+                .WithTextDisplay($"Dice:\n# > {(staticDisplay ? BotClient.Emojis.Empty : BotClient.Emojis.DiceLookup![meta.CurrentDice - 1][0][0])}")
+                .WithActionRow(actionRow);
 
         if (staticDisplay)
             body.WithAccentColor(Color.Gold);
@@ -179,8 +180,12 @@ public static partial class Actions
         ActionRowBuilder bottomerRow = new ActionRowBuilder()
             .WithButton(rematchButton);
 
+        int crown = -1;
+        if (winner != null)
+            crown = winnerID == meta.InitiatorID ? 0 : 1;
+
         MessageComponent messageComponents = new ComponentBuilderV2()
-            .WithContainer(await CreateGameBody(meta, true, initiator, opponent))
+            .WithContainer(await CreateGameBody(meta, true, initiator, opponent, crown))
             .WithContainer(metac)
             .WithActionRow(bottomRow)
             .WithActionRow(bottomerRow)

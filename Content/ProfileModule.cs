@@ -10,7 +10,7 @@ namespace CotLMinigames;
 [CommandContextType(InteractionContextType.Guild, InteractionContextType.BotDm, InteractionContextType.PrivateChannel)]
 public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 {
-    public const int DevotionBarWidth = 14;
+    public const int DevotionBarWidth = 12;
     public const int DevotionOnDevote = 10;
 
     [SlashCommand("profile", "View your or somebody else's profile")]
@@ -94,11 +94,13 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         UserData devotee = await Database.GetUser(Context.User!.Id, db);
         UserData devoted = await Database.GetUser(user.Id, db);
 
-        if ((DateTime.UtcNow - devotee.LastDevote).TotalHours < 1)
-        {
-            await Context.FollowupAsync("You've already devoted to somebody in the last hour!", ephemeral: true);
-            return;
-        }
+        IUser devoteeUser = await BotClient.Client.GetUserAsync(Context.User.Id);
+
+        // if ((DateTime.UtcNow - devotee.LastDevote).TotalHours < 1)
+        // {
+        //     await Context.FollowupAsync("You've already devoted to somebody in the last hour!", ephemeral: true);
+        //     return;
+        // }
 
         int coins = new Random().Next(1, 6);
         long maxDevotion = CalculateMaxDevotion(devoted.Level);
@@ -112,42 +114,38 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
         long godTearsToGive = devoted.Level - level;
         devoted.Inventory.GodTears += godTearsToGive;
 
-        Embed embed;
+        ContainerBuilder container = new ContainerBuilder()
+            .WithTextDisplay($"## {devoteeUser.GlobalName} has devoted to {(string.IsNullOrEmpty(user.GlobalName) ? user.Username : user.GlobalName)}")
+            .WithSeparator()
+            .WithTextDisplay($"<@{devoted.UserID}>");
 
         if (godTearsToGive == 0)
         {
-            embed = new EmbedBuilder()
-                .WithDescription($"""
-<@{Context.User.Id}>:
-{BotClient.Emojis.Coin} Coins: +{coins} ({devotee.Inventory.Coins})
-
-<@{user.Id}>:
-{BotClient.Emojis.Devotion} Devotion: +{DevotionOnDevote}
-{CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
-**Level:** {devoted.Level}
-""")
-                .WithColor(Color.LighterGrey)
-                .Build();
-        } else
+            container.WithTextDisplay($"""
+                > **{BotClient.Emojis.Devotion} Devotion:** +{DevotionOnDevote} ({currentDevotion + DevotionOnDevote}/{maxDevotion})
+                > {CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
+                > **Level:** {devoted.Level}
+                """);
+        }
+        else
         {
-            embed = new EmbedBuilder()
-                .WithDescription($"""
-<@{Context.User.Id}>:
-{BotClient.Emojis.Coin} Coins: +{coins} ({devotee.Inventory.Coins})
-
-<@{user.Id}>:
-{BotClient.Emojis.Devotion} Devotion: +{DevotionOnDevote}
-
-{currentDevotion + DevotionOnDevote} / {maxDevotion}{BotClient.Emojis.Devotion}
-{CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
-You have levelled up! You are now at level {devoted.Level}.
-{BotClient.Emojis.GodTear} God Tears: +{godTearsToGive} ({devoted.Inventory.GodTears})
-""")
-                .WithColor(Color.LighterGrey)
-                .Build();
+            container.WithTextDisplay($"""
+                > **{BotClient.Emojis.Devotion} Devotion:** +{DevotionOnDevote} ({currentDevotion + DevotionOnDevote}/{maxDevotion})
+                > {CalculateDevotionBar(DevotionBarWidth, currentDevotion + DevotionOnDevote, maxDevotion)}
+                > **Level:** +{godTearsToGive} ({devoted.Level})
+                > **{BotClient.Emojis.GodTear} God Tears:** +{godTearsToGive} ({devoted.Inventory.GodTears})
+                """);
         }
 
-        await Context.FollowupAsync($"<@{Context.User.Id}> has devoted to <@{user.Id}>!", embed: embed);
+        container.WithSeparator()
+            .WithTextDisplay($"<@{devotee.UserID}>")
+            .WithTextDisplay($"> **{BotClient.Emojis.Coin} Coins:** +{coins} ({devotee.Inventory.Coins})");
+
+        MessageComponent component = new ComponentBuilderV2()
+            .WithContainer(container)
+            .Build();
+
+        await Context.FollowupAsync(components: component);
 
         await db.SaveChangesAsync();
     }
