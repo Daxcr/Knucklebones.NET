@@ -171,7 +171,8 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
             InitiatorID = Context.User.Id,
             OpponentID = user != null ? user.Id : 0,
             InitiatedChannelID = Context.Channel?.Id,
-            Bet = bet
+            Bet = bet,
+            Guild = Context.Guild
         };
         if (Context.Guild == null)
         {
