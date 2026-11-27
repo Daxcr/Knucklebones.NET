@@ -21,52 +21,75 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
     }
     public static async Task Profile(UserContext Context, IUser? user = null)
     {
-        if (user == null)
-            user = Context.User;
-        await Context.DeferAsync();
+        try
+        {
+            if (user == null)
+                user = Context.User;
+            await Context.DeferAsync();
 
-        using DatabaseContext db = Database.Create();
-        UserData? usermeta = await Database.GetUser(user!.Id, db);
+            using DatabaseContext db = Database.Create();
+            UserData? usermeta = await Database.GetUser(user!.Id, db);
 
-        string title = $"{user.GlobalName}'s profile";
+            string avatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
+            long maxDevotion = CalculateMaxDevotion(usermeta.Level);
 
-        if (user.Id == BotClient.Client.CurrentUser.Id)
-            title = $"Narinder's profile";
+            ContainerBuilder container = new ContainerBuilder()
+                .WithTextDisplay($"# {(string.IsNullOrEmpty(user.GlobalName) ? user.Username : user.GlobalName)}'s Profile")
 
-        Embed main = new EmbedBuilder()
-            .WithTitle(title)
-            .WithDescription($"""
-**{BotClient.Emojis.Coin} Coins:** {usermeta.Inventory.Coins}
-**{BotClient.Emojis.Wool} Wool:** {usermeta.Inventory.Wool}
-**{BotClient.Emojis.GodTear} God Tears:** {usermeta.Inventory.GodTears}
+                .WithSeparator()
 
-**Wins:** {usermeta.Wins}
-**Games played:** {usermeta.GamesPlayed}
-**Streak:** {usermeta.Streak}
-""")
-            .WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
-            .WithImageUrl("https://cdn.dax.cr/knucklebones.net/banners/default.png")
-            .WithColor(Color.Blue)
-            .Build();
+                .WithSection(new SectionBuilder()
+                    .WithTextDisplay("## Stats")
+                    .WithTextDisplay($"> **Wins:** {usermeta.Wins}\n> **Games Played:** {usermeta.GamesPlayed}\n> **Streak:** {usermeta.Streak}")
+                    .WithAccessory(new ThumbnailBuilder(new UnfurledMediaItemProperties(avatarUrl))))
 
-        long maxDevotion = CalculateMaxDevotion(usermeta.Level);
+                .WithActionRow(new ActionRowBuilder()
+                    .WithButton(new ButtonBuilder()
+                        .WithLabel("View last 10 games")
+                        .WithStyle(ButtonStyle.Secondary)
+                        .WithCustomId($"lastfourgames/{usermeta.UserID}")))
 
-        Embed devotion = new EmbedBuilder()
-            .WithDescription($"""
-{usermeta.Devotion} / {maxDevotion}{BotClient.Emojis.Devotion}
-{CalculateDevotionBar(DevotionBarWidth, usermeta.Devotion, maxDevotion)}
-**Level:** {usermeta.Level}
-""")
-            .WithColor(Color.LighterGrey)
-            .Build();
+                .WithSeparator()
 
-        MessageComponent components = new ComponentBuilder()
-            .WithButton("Edit your profile", $"editprofile", ButtonStyle.Secondary, disabled: true) // Leaving these disabled for now while I implement them
-            .WithButton("View your inventory", $"viewinventory", ButtonStyle.Secondary, disabled: true)
-            .WithButton("View last 4 games", $"lastfourgames/{usermeta.UserID}", ButtonStyle.Secondary)
-            .Build();
+                .WithTextDisplay("## Inventory")
+                .WithTextDisplay($"> **{BotClient.Emojis.Coin} Coins:** {usermeta.Inventory.Coins}\n> **{BotClient.Emojis.Wool} Wool:** {usermeta.Inventory.Wool}\n> **{BotClient.Emojis.GodTear} God Tears:** {usermeta.Inventory.GodTears}")
 
-        await Context.FollowupAsync(embeds: [main, devotion], components: components);
+                .WithActionRow(new ActionRowBuilder()
+                    .WithButton(new ButtonBuilder()
+                        .WithLabel($"Open {(string.IsNullOrEmpty(user.GlobalName) ? user.Username : user.GlobalName)}'s inventory")
+                        .WithStyle(ButtonStyle.Secondary)
+                        .WithCustomId($"inventory/{usermeta.UserID}")
+                        .WithDisabled(true))
+                    .WithButton(new ButtonBuilder()
+                        .WithLabel($"Open Shop")
+                        .WithStyle(ButtonStyle.Primary)
+                        .WithCustomId($"shop")
+                        .WithDisabled(true)))
+
+                .WithSeparator()
+
+                .WithTextDisplay("## Devotion")
+                .WithTextDisplay($"> **Level:** {usermeta.Level}\n> **{BotClient.Emojis.Devotion} Devotion:** {usermeta.Devotion}/{maxDevotion}\n> {CalculateDevotionBar(DevotionBarWidth, usermeta.Devotion, maxDevotion)}")
+
+                .WithMediaGallery(new MediaGalleryBuilder().AddItem("https://cdn.dax.cr/knucklebones.net/banners/default.png?t=2"));
+
+            MessageComponent component = new ComponentBuilderV2()
+                .WithContainer(container)
+                .WithActionRow(new ActionRowBuilder()
+                    .WithButton(new ButtonBuilder()
+                        .WithLabel("Cultcord Repo")
+                        .WithStyle(ButtonStyle.Link)
+                        .WithUrl("https://github.com/Daxcr/Knucklebones.NET"))
+                    .WithButton(new ButtonBuilder()
+                        .WithLabel("Edit my profile")
+                        .WithStyle(ButtonStyle.Secondary)
+                        .WithCustomId("editprofile")
+                        .WithDisabled(true)))
+                .Build();
+
+            await Context.FollowupAsync(components: component);
+        }
+        catch (Exception ex) { Console.WriteLine(ex); }
     }
 
     [SlashCommand("devote", "Devote to somebody")]

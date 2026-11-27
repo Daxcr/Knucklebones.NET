@@ -12,7 +12,7 @@ public static partial class Actions
         bool editMessage = bool.Parse(buttondata[2]);
 
         if (editMessage)
-            await component.DeferAsync();
+            _ = component.DeferAsync();
 
         await HowToPlay(ctx, page, editMessage);
     }
