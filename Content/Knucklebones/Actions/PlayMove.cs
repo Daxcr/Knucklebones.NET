@@ -72,7 +72,7 @@ public static partial class Actions
         try
         {
             if (!bot)
-                await Context.DeferAsync();
+                _ = Context.DeferAsync(); // Don't await, they should hit Discord's servers at about the same time
 
             RecalculateTables(meta, pressedbutton);
 
@@ -94,7 +94,7 @@ public static partial class Actions
 
         if (!bot && (meta.OpponentID == BotClient.Client.CurrentUser.Id || meta.OpponentID == ulong.Parse(BotClient.LAMB.ID!)))
         {
-            await Task.Delay(1200);
+            await Task.Delay(400);
             string response = await CalculateBotResponse(meta);
             await PlayMove(Context, response, gameID, (int.Parse(turn) + 1).ToString(), true);
         }

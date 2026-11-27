@@ -139,14 +139,20 @@ public static partial class Actions
         else
             metac.WithTextDisplay($"~~**Winner:** ~~**TIE**");
 
+        string text = string.Empty; // Compose the response in a string to keep things tidy ig
+
         if (coinsEarned != 0 && winner != null)
-            metac.WithTextDisplay($"**{BotClient.Emojis.Coin} Coins:** +{coinsEarned} ({winner.Inventory.Coins})");
+            text += $"> **{BotClient.Emojis.Coin} Coins:** +{coinsEarned} ({winner.Inventory.Coins})\n";
 
         if (devotionEarned != 0 && winner != null)
         {
-            metac.WithTextDisplay($"**{BotClient.Emojis.Devotion} Devotion:** +{devotionEarned} ({winner.Devotion})");
-            metac.WithTextDisplay(ProfileModule.CalculateDevotionBar(12, winner.Devotion, ProfileModule.CalculateMaxDevotion(winner.Level)));
+            text += $"> **{BotClient.Emojis.Devotion} Devotion:** +{devotionEarned} ({winner.Devotion})\n> ";
+            text += ProfileModule.CalculateDevotionBar(12, winner.Devotion, ProfileModule.CalculateMaxDevotion(winner.Level));
+            text += "\n";
         }
+
+        if (text != string.Empty)
+            metac.WithTextDisplay(text);
 
         if (godTearsEarned != 0 && winner != null)
         {
