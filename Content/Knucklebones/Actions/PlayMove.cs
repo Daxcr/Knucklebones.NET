@@ -94,7 +94,7 @@ public static partial class Actions
 
         if (!bot && (meta.OpponentID == BotClient.Client.CurrentUser.Id || meta.OpponentID == ulong.Parse(BotClient.LAMB.ID!)))
         {
-            await Task.Delay(400);
+            await Task.Delay(600);
             string response = await CalculateBotResponse(meta);
             await PlayMove(Context, response, gameID, (int.Parse(turn) + 1).ToString(), true);
         }

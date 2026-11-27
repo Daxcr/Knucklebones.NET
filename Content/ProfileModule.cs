@@ -96,11 +96,11 @@ public class ProfileModule : InteractionModuleBase<SocketInteractionContext>
 
         IUser devoteeUser = await BotClient.Client.GetUserAsync(Context.User.Id);
 
-        // if ((DateTime.UtcNow - devotee.LastDevote).TotalHours < 1)
-        // {
-        //     await Context.FollowupAsync("You've already devoted to somebody in the last hour!", ephemeral: true);
-        //     return;
-        // }
+        if ((DateTime.UtcNow - devotee.LastDevote).TotalHours < 1)
+        {
+            await Context.FollowupAsync("You've already devoted to somebody in the last hour!", ephemeral: true);
+            return;
+        }
 
         int coins = new Random().Next(1, 6);
         long maxDevotion = CalculateMaxDevotion(devoted.Level);
