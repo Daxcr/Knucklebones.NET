@@ -22,7 +22,7 @@ public static partial class Actions
     {
         IUser? user = Context.User;
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
-        
+
         if (meta != null)
         {
             if (meta.OpponentID != user?.Id)
@@ -43,28 +43,17 @@ public static partial class Actions
             DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
             TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
 
-            Embed embed = new EmbedBuilder()
-                .WithTitle("Match request (Declined)")
-                .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was declined {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                .WithColor(Color.Red)
-                .Build();
-                
-            MessageComponent disabledComponents = new ComponentBuilder()
-                .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
-                .WithButton("Decline", $"decline/disabled", ButtonStyle.Danger, disabled: true)
-                .Build();
+            MessageComponent components = await MessageBuilder.BuildInviteComponents(meta, MessageBuilder.InviteState.Declined, expiry);
 
             if (meta.Guild == null)
                 await Context.ModifyOriginalResponseAsync(message =>
                 {
-                    message.Embed = embed;
-                    message.Components = disabledComponents;
+                    message.Components = components;
                 });
             else
                 await Context.ModifyAsync(message =>
                 {
-                    message.Embed = embed;
-                    message.Components = disabledComponents;
+                    message.Components = components;
                 });
 
             BotClient.Games.Remove(meta);

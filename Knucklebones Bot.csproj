@@ -17,6 +17,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.32.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,12 @@
     <Compile Remove="Rose/**/*.cs" />
     <EmbeddedResource Remove="Rose/**" />
     <None Remove="Rose/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Content/Models/**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
