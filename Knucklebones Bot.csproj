@@ -33,4 +33,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="Rose\Rose.NET.csproj" />
+  </ItemGroup>
+
 </Project>
