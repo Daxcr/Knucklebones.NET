@@ -47,49 +47,18 @@ public static partial class Actions
                 Random rnd = new();
                 meta.InitiatorTurn = true;
 
-                if (meta.Guild == null)
+                meta.CurrentDice = (byte)new Random().Next(1, 7);
+
+                await Context.ModifyOriginalResponseAsync(async message =>
                 {
-                    meta.CurrentDice = (byte)new Random().Next(1, 7);
+                    message.Content = null;
+                    message.Embed = null;
+                    message.Embeds = null;
+                    message.Flags = MessageFlags.ComponentsV2;
+                    message.Components = await BuildGameComponents(meta);
+                });
 
-                    await Context.ModifyOriginalResponseAsync(async message =>
-                    {
-                        message.Content = null;
-                        message.Embed = null;
-                        message.Embeds = null;
-                        message.Flags = MessageFlags.ComponentsV2;
-                        message.Components = await BuildGameComponents(meta);
-                    });
-
-                    _ = WaitForGameExpiry(Context, meta);
-                }
-                else
-                {
-                    DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
-                    TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
-
-                    Embed embed = new EmbedBuilder()
-                        .WithTitle("Match request (Accepted)")
-                        .WithDescription($"<@{meta.InitiatorID}> would like to challenge me.\nThis request was accepted {expiry}.")
-                        .WithColor(Color.Green)
-                        .Build();
-
-                    MessageComponent disabledComponents = new ComponentBuilder()
-                        .WithButton("Go", $"accept/disabled", ButtonStyle.Success, disabled: true)
-                        .Build();
-
-                    await Context.ModifyOriginalResponseAsync(message =>
-                    {
-                        message.Embed = embed;
-                        message.Components = disabledComponents;
-                    });
-
-                    meta.CurrentDice = (byte)new Random().Next(1, 7);
-
-                    RestFollowupMessage? msg = await Context.FollowupAsync(components: await BuildGameComponents(meta));
-
-                    UserContext ctx = new(msg!);
-                    _ = WaitForGameExpiry(ctx, meta);
-                }
+                _ = WaitForGameExpiry(Context, meta);
             }
         } catch (Exception ex)
         {

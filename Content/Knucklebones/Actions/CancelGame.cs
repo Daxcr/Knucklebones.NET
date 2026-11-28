@@ -17,10 +17,10 @@ public static partial class Actions
         await CancelGame(ctx, gameID);
     }
     public static async Task CancelGame(UserContext Context, string gameID)
-    {   
+    {
         IUser? user = Context.User;
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
-        
+
         if (meta != null)
         {
             if (meta.InitiatorID != user?.Id)
@@ -41,46 +41,17 @@ public static partial class Actions
             DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
             TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
 
-            Embed embed;
-            MessageComponent disabledComponents;
-
-            if (meta.OpponentID != 0)
-            {
-                embed = new EmbedBuilder()
-                    .WithTitle("Match request (Cancelled)")
-                    .WithDescription($"<@{meta.OpponentID}> has been challenged to a game of Knucklebones by <@{meta.InitiatorID}>.\nThis request was cancelled {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                    .Build();
-                    
-                disabledComponents = new ComponentBuilder()
-                    .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
-                    .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
-                    .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
-                    .Build();
-            } else
-            {
-                embed = new EmbedBuilder()
-                    .WithTitle("Match request (Cancelled)")
-                    .WithDescription($"<@{meta.InitiatorID}> would like to be challenged to a game of Knucklebones.\nThis request was cancelled {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                    .Build();
-                    
-                disabledComponents = new ComponentBuilder()
-                    .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
-                    .WithButton("Challenge the Bot", $"bot/disabled", ButtonStyle.Secondary, disabled: true)
-                    .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
-                    .Build();
-            }
+            MessageComponent components = await MessageBuilder.BuildInviteComponents(meta, MessageBuilder.InviteState.Cancelled, expiry);
 
             if (meta.Guild == null)
                 await Context.ModifyOriginalResponseAsync(message =>
                 {
-                    message.Embed = embed;
-                    message.Components = disabledComponents;
+                    message.Components = components;
                 });
             else
                 await Context.ModifyAsync(message =>
                 {
-                    message.Embed = embed;
-                    message.Components = disabledComponents;
+                    message.Components = components;
                 });
 
             BotClient.Games.Remove(meta);
