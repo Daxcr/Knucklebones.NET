@@ -3,13 +3,13 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using CotLMinigames.Admin;
 using System.Text.Json;
-using CotLMinigames.Web;
 
 namespace CotLMinigames;
 
 public class BotClient
 {
     public static ulong ADMIN = ulong.Parse(File.ReadAllText("admin.txt"));
+    public static Lamb LAMB = JsonSerializer.Deserialize<Lamb>(File.ReadAllText("lamb.json"))!;
     public static DiscordSocketClient Client = new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All });
     InteractionService interactions = new InteractionService(Client);
     public const string CommandPrefix = "$$";
@@ -28,7 +28,7 @@ public class BotClient
             Emojis = JsonSerializer.Deserialize<Emojis>(text)!;
         }
         Emojis.MapEmojis();
-        
+
         Client.Log += message =>
         {
             Console.WriteLine(message.ToString());
@@ -101,13 +101,29 @@ public class BotClient
                 case "rematchkb":
                     _ = Knucklebones.KBGameModule.Rematch(buttondata, component);
                     break;
-                
+
+                case "cancelkb":
+                    _ = Knucklebones.Actions.CancelGame(buttondata, component);
+                    break;
+
+                case "challengebotkb":
+                    _ = Knucklebones.KBGameModule.ChallengeBot(buttondata, component);
+                    break;
+
+                case "howtokb":
+                    _ = Knucklebones.Actions.HowToPlay(buttondata, component);
+                    break;
+
                 case "devote":
                     _ = ProfileModule.Devote(buttondata, component);
                     break;
 
                 case "lastfourgames":
                     _ = ProfileModule.ShowLastFourGames(buttondata, component);
+                    break;
+
+                case "ACKNOWLEDGE":
+                    await component.RespondAsync($"# `{LAMB.Hint}`", ephemeral: true);
                     break;
 
                 default:
@@ -129,16 +145,27 @@ Time (UTC): {DateTime.UtcNow}
                     break;
             }
         };
+
+        Client.SelectMenuExecuted += async component =>
+        {
+            string[] menudata = component.Data.Values.ToArray();
+            switch (component.Data.CustomId)
+            {
+                case "howtokb-menu":
+                    _ = Knucklebones.Actions.HowToPlayMenu(menudata, component);
+                    break;
+            }
+        };
     }
 
     public async Task Start(string token)
     {
-        Server server = new()
-        {
-            Port = 12008,
-            Host = "127.0.0.1",
-            MaxRequestSize = 10 * 1024 * 1024,
-        };
+        // Server server = new()
+        // {
+        //     Port = 12008,
+        //     Host = "127.0.0.1",
+        //     MaxRequestSize = 10 * 1024 * 1024,
+        // };
 
         await interactions.AddModuleAsync<Knucklebones.KBGameModule>(null);
         await interactions.AddModuleAsync<Flockade.FLGameModule>(null);
@@ -147,7 +174,7 @@ Time (UTC): {DateTime.UtcNow}
         await Client.LoginAsync(TokenType.Bot, token);
         await Client.StartAsync();
 
-        server.AcceptingConnections = true;
+        // server.AcceptingConnections = true;
 
         await Task.Delay(-1);
     }

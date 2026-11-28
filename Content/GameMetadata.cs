@@ -20,7 +20,7 @@ public class GameMetadata
             .ToString("N")
             .Substring(0, 21);
     }
-    
+
     public string ID { get; set; }
     public bool GameStarted { get; set; } = false;
     public bool GameDeclined { get; set; } = false;

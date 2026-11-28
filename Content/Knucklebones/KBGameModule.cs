@@ -78,7 +78,57 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
-    public static async Task Knucklebones(UserContext Context, IUser? user = null, int bet = 0)
+    public static async Task ChallengeBot(string[] ButtonData, SocketMessageComponent component)
+    {
+        KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == ButtonData[1]);
+        if (meta?.InitiatorID != component.User.Id)
+        {
+            MessageComponent button = new ComponentBuilder()
+                .WithButton("Acknowledge", "ACKNOWLEDGE", ButtonStyle.Danger)
+                .Build();
+
+            await component.RespondAsync("Woah! I regret to inform you, but this isn't for you.", ephemeral: true, components: button);
+            return;
+        }
+        UserContext ctx = new(component);
+
+        await Knucklebones(ctx, BotClient.Client.CurrentUser, editCtx: meta.Guild == null);
+
+        using DatabaseContext db = Database.Create();
+        UserData? initiator = await Database.GetUser(meta.InitiatorID, db);
+
+        initiator.Inventory.Coins += meta.Bet;
+
+        await db.SaveChangesAsync();
+
+        if (meta.Guild != null)
+        {
+            DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
+            TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
+
+            Embed embed = new EmbedBuilder()
+                .WithTitle("Match request (Cancelled)")
+                .WithDescription($"<@{meta.InitiatorID}> would like to be challenged to a game of Knucklebones.\nThis request was cancelled {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
+                .Build();
+
+            MessageComponent disabledComponents = new ComponentBuilder()
+                .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
+                .WithButton("Challenge the Bot", $"bot/disabled", ButtonStyle.Secondary, disabled: true)
+                .WithButton("Cancel", $"cancel/disabled", ButtonStyle.Secondary, disabled: true)
+                .Build();
+
+            await component.ModifyOriginalResponseAsync(message =>
+            {
+                message.Embed = embed;
+                message.Components = disabledComponents;
+            });
+        }
+
+        BotClient.Games.Remove(meta);
+        meta.GameDeclined = true;
+    }
+
+    public static async Task Knucklebones(UserContext Context, IUser? user = null, int bet = 0, bool editCtx = false)
     {
         if (Context.User!.Id == user?.Id)
         {
@@ -87,7 +137,7 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         }
         if (user?.Id == BotClient.Client.CurrentUser.Id)
             bet = 0;
-            
+
         await Context.DeferAsync();
 
         using DatabaseContext db = Database.Create();
@@ -121,7 +171,8 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
             InitiatorID = Context.User.Id,
             OpponentID = user != null ? user.Id : 0,
             InitiatedChannelID = Context.Channel?.Id,
-            Bet = bet
+            Bet = bet,
+            Guild = Context.Guild
         };
         if (Context.Guild == null)
         {
@@ -130,64 +181,20 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
 
         DateTimeOffset expiryoffset = DateTimeOffset.UtcNow.AddSeconds(GameMetadata.ChallengeExpiry);
         TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
-        Embed embed;
-        MessageComponent components;
-
-        switch (user)
-        {
-            case null:
-                embed = new EmbedBuilder()
-                    .WithTitle("Match request")
-                    .WithDescription($"<@{Context.User.Id}> would like to be challenged to a game of Knucklebones.\nThis request will expire {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                    .WithColor(Color.Blue)
-                    .Build();
-
-                components = new ComponentBuilder()
-                    .WithButton("Accept", $"acceptkb/{meta.ID}", ButtonStyle.Success)
-                    .Build();
-                break;
-
-            default:
-                if (user.Id == BotClient.Client.CurrentUser.Id)
-                {
-                    embed = new EmbedBuilder()
-                        .WithTitle("Match request")
-                        .WithDescription($"<@{Context.User.Id}> would like to challenge me.\nThis request will expire {expiry}.")
-                        .WithColor(Color.Blue)
-                        .Build();
-
-                    components = new ComponentBuilder()
-                        .WithButton("Go!", $"acceptbotkb/{meta.ID}", ButtonStyle.Success)
-                        .Build();
-                }
-                else
-                {
-                    embed = new EmbedBuilder()
-                        .WithTitle("Match request")
-                        .WithDescription($"<@{user.Id}> has been challenged to a game of Knucklebones by <@{Context.User.Id}>.\nThis request will expire {expiry}.\n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                        .WithColor(Color.Blue)
-                        .Build();
-
-                    components = new ComponentBuilder()
-                        .WithButton("Accept", $"acceptkb/{meta.ID}", ButtonStyle.Success)
-                        .WithButton("Decline", $"declinekb/{meta.ID}", ButtonStyle.Danger)
-                        .Build();
-                }
-
-                break;
-        }
-        
-
-        string ping = string.Empty;
+        MessageComponent components = await MessageBuilder.BuildInviteComponents(meta, MessageBuilder.InviteState.Pending, expiry);
 
         if (Context.Guild != null && user != null)
         {
             ServerSettings servermeta = await Database.GetGuild(Context.Guild.Id, db);
-            ping = servermeta.PingOpponents ? $"<@{user?.Id}>" : string.Empty;
         }
 
-
-        await Context.FollowupAsync(ping, embed: embed, components: components);
+        if (editCtx)
+            await Context.ModifyOriginalResponseAsync(msg =>
+            {
+                msg.Components = components;
+            });
+        else
+            await Context.FollowupAsync(components: components);
         _ = WaitForChallengeExpiry(Context, meta, Context.User.Id, user?.Id, expiry, bet);
 
         initiator.Inventory.Coins -= bet;
@@ -205,38 +212,11 @@ public class KBGameModule : InteractionModuleBase<SocketInteractionContext>
         {
             initiator.Inventory.Coins += bet;
 
-            MessageComponent disabledComponents;
-            Embed embed;
-
-            if (opponentID != null)
-            {
-                embed = new EmbedBuilder()
-                    .WithTitle("Match request (Expired)")
-                    .WithDescription($"<@{opponentID}> has been challenged to a game of Knucklebones by <@{initiatorID}>.\nThis request expired {expiry}. \n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                    .WithColor(Color.DarkerGrey)
-                    .Build();
-                    
-                disabledComponents = new ComponentBuilder()
-                    .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
-                    .WithButton("Decline", $"decline/disabled", ButtonStyle.Secondary, disabled: true)
-                    .Build();
-            } else
-            {
-                embed = new EmbedBuilder()
-                    .WithTitle("Match request (Expired)")
-                    .WithDescription($"<@{initiatorID}> would like to be challenged to a game of Knucklebones.\nThis request expired {expiry}. \n\nBet: {BotClient.Emojis.Coin} {meta.Bet}")
-                    .WithColor(Color.DarkerGrey)
-                    .Build();
-                    
-                disabledComponents = new ComponentBuilder()
-                    .WithButton("Accept", $"accept/disabled", ButtonStyle.Secondary, disabled: true)
-                    .Build();
-            }
+            MessageComponent components = await MessageBuilder.BuildInviteComponents(meta, MessageBuilder.InviteState.Expired, expiry);
 
             await Context.ModifyOriginalResponseAsync(message =>
             {
-                message.Embed = embed;
-                message.Components = disabledComponents;
+                message.Components = components;
             });
 
             BotClient.Games.Remove(meta);
