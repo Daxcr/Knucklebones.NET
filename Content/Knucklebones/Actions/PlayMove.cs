@@ -18,7 +18,7 @@ public static partial class Actions
     public static async Task PlayMove(UserContext Context, string pressedbutton, string gameID, string turn, bool bot)
     {
         KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
-            
+
         if (meta == null)
         {
             await Context.RespondAsync("Something went wrong", ephemeral: true);
@@ -33,15 +33,21 @@ public static partial class Actions
 
         if (pressedbutton == "forfeit")
         {
-            await Context.DeferAsync();
+            try
+            {
+                await Context.DeferAsync();
 
-            meta.ForfeitSource = Context;
+                meta.ForfeitSource = Context;
 
-            MessageComponent forfeitComponent = new ComponentBuilder()
-                .WithButton("Yes, I forfeit", $"forfeitkb/{gameID}", ButtonStyle.Danger)
-                .Build();
-            await Context.FollowupAsync("Forfeit game? The other player will be declared the winner.", ephemeral: true, components: forfeitComponent);
-            return;
+                MessageComponent forfeitComponent = new ComponentBuilder()
+                    .WithButton("Yes, I forfeit", $"forfeitkb/{gameID}", ButtonStyle.Danger)
+                    .Build();
+                await Context.FollowupAsync("Forfeit game? The other player will be declared the winner.", ephemeral: true, components: forfeitComponent);
+                return;
+            } catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         if (meta.Expired)
@@ -66,7 +72,7 @@ public static partial class Actions
         try
         {
             if (!bot)
-                await Context.DeferAsync();
+                _ = Context.DeferAsync(); // Don't await, they should hit Discord's servers at about the same time
 
             RecalculateTables(meta, pressedbutton);
 
@@ -76,21 +82,21 @@ public static partial class Actions
                 return;
             }
 
-            await AdvanceLastMessage(Context, meta);
-
             meta.Turn += 1;
             meta.InitiatorTurn = !meta.InitiatorTurn;
+            await AdvanceLastMessage(Context, meta);
+
             meta.Busy = false;
         } catch
         {
             meta.Busy = false;
         }
 
-        if (!bot && meta.OpponentID == BotClient.Client.CurrentUser.Id)
+        if (!bot && (meta.OpponentID == BotClient.Client.CurrentUser.Id || meta.OpponentID == ulong.Parse(BotClient.LAMB.ID!)))
         {
             await Task.Delay(1200);
             string response = await CalculateBotResponse(meta);
-            await PlayMove(Context, response, gameID, turn + 1, true);
+            await PlayMove(Context, response, gameID, (int.Parse(turn) + 1).ToString(), true);
         }
     }
 
@@ -99,7 +105,7 @@ public static partial class Actions
         byte dice = meta.CurrentDice;
         KBGameMetadata.Table botTable = meta.OpponentTable;
         KBGameMetadata.Table playerTable = meta.InitiatorTable;
-        
+
         Dictionary<byte, string> columns = new()
         {
             { 0, "left" },
@@ -107,8 +113,11 @@ public static partial class Actions
             { 2, "right" },
         };
 
-        return columns[AIAggro(meta)];
+        // fallback if model is unavailable
+        byte column = KBPolicy.ChooseColumn(botTable, playerTable, dice) ?? AIAggro(meta);
+        return columns[column];
     }
+
 
     private static byte AIAggro(KBGameMetadata meta)
     {

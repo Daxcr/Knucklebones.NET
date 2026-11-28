@@ -22,7 +22,7 @@ public static partial class Actions
         }
     }
 
-    async public static Task<Embed> CalculateBetsAndDevotion(KBGameMetadata meta, bool initiatorWin)
+    public static async Task<(int, int, int, UserData?)> CalculateBetsAndDevotion(KBGameMetadata meta, bool tie, bool initiatorWin)
     {
         using var db = Database.Create();
 
@@ -32,64 +32,52 @@ public static partial class Actions
         UserData winner = initiatorWin ? initiator : opponent;
         UserData loser = initiatorWin ? opponent : initiator;
 
-        winner.Wins += 1;
+        if (!tie) winner.Wins += 1;
         winner.GamesPlayed += 1;
-        winner.Streak += 1;
-        
+        if (tie)
+            winner.Streak = 0;
+        else
+            winner.Streak += 1;
+
         loser.GamesPlayed += 1;
         loser.Streak = 0;
 
         winner.LastTenGames.Add(meta);
-        if (winner.LastTenGames.Count() > 10)
+        if (winner.LastTenGames.Count > 10)
             winner.LastTenGames.RemoveAt(0);
 
         loser.LastTenGames.Add(meta);
-        if (loser.LastTenGames.Count() > 10)
+        if (loser.LastTenGames.Count > 10)
             loser.LastTenGames.RemoveAt(0);
 
         int addedDevotion = DevotionOnWin + (meta.Bet * 6);
 
-        string bar = ProfileModule.CalculateDevotionBar(
-            ProfileModule.DevotionBarWidth,
-            winner.Devotion + addedDevotion,
-            ProfileModule.CalculateMaxDevotion(winner.Level)
-        );
+        // string bar = ProfileModule.CalculateDevotionBar(
+        //     ProfileModule.DevotionBarWidth,
+        //     winner.Devotion + addedDevotion,
+        //     ProfileModule.CalculateMaxDevotion(winner.Level)
+        // );
+        if (tie)
+        {
+            winner.Inventory.Coins += meta.Bet;
+            loser.Inventory.Coins += meta.Bet;
 
-        winner.Inventory.Coins += meta.Bet * 2;
-        long level = winner.Level;
-        winner.AddDevotion(addedDevotion);
-        long godTearsToGive = winner.Level - level;
-        winner.Inventory.GodTears += godTearsToGive;
+            await db.SaveChangesAsync();
 
-        await db.SaveChangesAsync();
-
-        if (godTearsToGive == 0)
-            return new EmbedBuilder()
-                .WithDescription($"""
-**Winner:** <@{winner.UserID}>
-{BotClient.Emojis.Coin} Coins: +{meta.Bet} ({winner.Inventory.Coins})
-{BotClient.Emojis.Devotion} Devotion: +{addedDevotion}
-{bar}
-
-**Loser:** <@{loser.UserID}>
-{BotClient.Emojis.Coin} Coins: -{meta.Bet} ({loser.Inventory.Coins})
-""")
-                .WithColor(Color.Default)
-                .Build();
+            return (0, 0, 0, null);
+        }
         else
-            return new EmbedBuilder()
-                .WithDescription($"""
-**Winner:** <@{winner.UserID}>
-{BotClient.Emojis.Coin} Coins: +{meta.Bet} ({winner.Inventory.Coins})
-{BotClient.Emojis.Devotion} Devotion: +{addedDevotion}
-{bar}
-You have levelled up! You are now at level {winner.Level}.
-{BotClient.Emojis.GodTear} God Tears: +{godTearsToGive} ({winner.Inventory.GodTears})
+        {
+            winner.Inventory.Coins += meta.Bet * 2;
 
-**Loser:** <@{loser.UserID}>
-{BotClient.Emojis.Coin} Coins: -{meta.Bet} ({loser.Inventory.Coins})
-""")
-                .WithColor(Color.Default)
-                .Build();
+            long level = winner.Level;
+            winner.AddDevotion(addedDevotion);
+            long godTearsToGive = winner.Level - level;
+            winner.Inventory.GodTears += godTearsToGive;
+
+            await db.SaveChangesAsync();
+
+            return (meta.Bet, addedDevotion, (int)godTearsToGive, winner);
+        }
     }
 }

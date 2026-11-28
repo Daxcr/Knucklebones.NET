@@ -24,7 +24,7 @@ public static partial class Actions
         {
             IUser? user = Context.User;
             KBGameMetadata? meta = (KBGameMetadata?)BotClient.Games.FirstOrDefault(item => item.ID == gameID);
-            
+
             if (meta != null)
             {
                 if (meta.InitiatorID != user?.Id)
@@ -47,51 +47,18 @@ public static partial class Actions
                 Random rnd = new();
                 meta.InitiatorTurn = true;
 
-                DateTimeOffset expiryoffset = DateTimeOffset.UtcNow;
-                TimestampTag expiry = TimestampTag.FromDateTimeOffset(expiryoffset, TimestampTagStyles.Relative);
+                meta.CurrentDice = (byte)new Random().Next(1, 7);
 
-                Embed embed = new EmbedBuilder()
-                    .WithTitle("Match request (Accepted)")
-                    .WithDescription($"<@{meta.InitiatorID}> would like to challenge me.\nThis request was accepted {expiry}.")
-                    .WithColor(Color.Green)
-                    .Build();
-                    
-                MessageComponent disabledComponents = new ComponentBuilder()
-                    .WithButton("Go", $"accept/disabled", ButtonStyle.Success, disabled: true)
-                    .Build();
-
-                await Context.ModifyOriginalResponseAsync(message =>
+                await Context.ModifyOriginalResponseAsync(async message =>
                 {
-                    message.Embed = embed;
-                    message.Components = disabledComponents;
+                    message.Content = null;
+                    message.Embed = null;
+                    message.Embeds = null;
+                    message.Flags = MessageFlags.ComponentsV2;
+                    message.Components = await BuildGameComponents(meta);
                 });
 
-                Embed initiatorembed = await BuildPlayerEmbed(meta, true, meta.InitiatorTurn);
-                Embed opponentembed = await BuildPlayerEmbed(meta, false, meta.InitiatorTurn);          
-
-                meta.CurrentDice = (byte)new Random().Next(1,7);
-                Embed diceEmbed = BuildDiceEmbed(meta);
-
-                MessageComponent gameActions = new ComponentBuilder()
-                    .WithButton("Left", $"playkb/left/{meta.ID}/1", ButtonStyle.Primary)
-                    .WithButton("Middle", $"playkb/middle/{meta.ID}/1", ButtonStyle.Primary)
-                    .WithButton("Right", $"playkb/right/{meta.ID}/1", ButtonStyle.Primary)
-                    .WithButton("Forfeit", $"playkb/forfeit/{meta.ID}/0", ButtonStyle.Danger)
-                    .Build();
-
-                RestFollowupMessage? msg;
-
-                if (meta.Guild == null)
-                {
-                    msg = await Context.FollowupAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
-                }
-                else
-                {
-                    msg = await Context.FollowupAsync(embeds: [initiatorembed, opponentembed, diceEmbed], components: gameActions);
-                }
-
-                UserContext ctx = new(msg!);
-                _ = WaitForGameExpiry(ctx, meta);
+                _ = WaitForGameExpiry(Context, meta);
             }
         } catch (Exception ex)
         {

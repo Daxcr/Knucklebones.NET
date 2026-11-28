@@ -79,10 +79,7 @@ public class KBGameMetadata : GameMetadata
         }
     }
 
-
-    public const string HorizontalTableSplit = "  ";
-
-    public string BuildTable(Table table, Table diff, bool active, bool invert = false, bool small = false)
+    public string[] BuildTable(Table table, Table diff, bool active, bool invert = false, bool small = false)
     {
         string row1;
         string row2;
@@ -100,18 +97,18 @@ public class KBGameMetadata : GameMetadata
             row3 = BuildRow(table.Left, table.Middle, table.Right, diff.Left, diff.Middle, diff.Right, 0, active, small);
         }
 
-        return row1 + "\n" + row2 + "\n" + row3 + "\n";
+        return [row1, row2, row3];
     }
     private string BuildRow(List<byte> col1, List<byte> col2, List<byte> col3, List<byte> dif1, List<byte> dif2, List<byte> dif3, byte index, bool active, bool small)
     {
         string item1 = BuildSingle(col1, dif1, index, active);
         string item2 = BuildSingle(col2, dif2, index, active);
         string item3 = BuildSingle(col3, dif3, index, active);
-        
+
         if (small)
             return $"{item1}{item2}{item3}";
         else
-            return $"# {item1}{HorizontalTableSplit}{item2}{HorizontalTableSplit}{item3}";
+            return $"# {item1} {item2} {item3}";
     }
     private string BuildSingle(List<byte> col, List<byte> dif, byte index, bool active)
     {

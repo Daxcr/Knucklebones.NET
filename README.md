@@ -12,7 +12,7 @@ A fanmade implementation of Cult of the Lamb's minigames for Discord (still a wo
 
 - Match requests (either for a specific person or anybody)
 
-- Bot games (by requesting a match with the bot itself)
+- Bot games (by requesting a match with the bot itself) running on a neural network
 
 ## Planned features
 
